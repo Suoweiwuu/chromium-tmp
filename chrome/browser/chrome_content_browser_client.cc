@@ -320,6 +320,8 @@
 #include "url/third_party/mozilla/url_parse.h"
 #include "url/url_constants.h"
 
+#include "dongshang/chrome/browser/chrome_browser_main_extra_parts_ds.h"
+
 #if BUILDFLAG(IS_WIN)
 #include "base/files/file_util.h"
 #include "base/strings/string_tokenizer.h"
@@ -1393,6 +1395,8 @@ ChromeContentBrowserClient::CreateBrowserMainParts(
   main_parts = std::make_unique<ChromeBrowserMainParts>(std::move(parameters),
                                                         &startup_data_);
 #endif
+
+  main_parts->AddParts(std::make_unique<ChromeBrowserMainExtraPartsDs>());
 
   bool add_profiles_extra_parts = true;
 #if BUILDFLAG(IS_ANDROID)

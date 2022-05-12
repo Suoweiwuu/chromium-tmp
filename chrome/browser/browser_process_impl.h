@@ -168,6 +168,9 @@ class BrowserProcessImpl : public BrowserProcess,
   policy::ChromeBrowserPolicyConnector* browser_policy_connector() override;
   policy::PolicyService* policy_service() override;
   IconManager* icon_manager() override;
+
+  DsBrowserBiz* ds_browser_biz() override;
+
   GpuModeManager* gpu_mode_manager() override;
   void CreateDevToolsProtocolHandler() override;
   void CreateDevToolsAutoOpener() override;
@@ -283,6 +286,9 @@ class BrowserProcessImpl : public BrowserProcess,
 
   bool created_icon_manager_ = false;
   std::unique_ptr<IconManager> icon_manager_;
+
+  bool created_ds_browser_biz_ = false;
+  std::unique_ptr<DsBrowserBiz> ds_browser_biz_;
 
   std::unique_ptr<GpuModeManager> gpu_mode_manager_;
 

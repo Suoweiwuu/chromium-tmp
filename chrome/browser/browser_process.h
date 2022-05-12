@@ -41,6 +41,8 @@ class StatusTray;
 class SystemNetworkContextManager;
 class WebRtcLogUploader;
 
+class DsBrowserBiz;
+
 #if !BUILDFLAG(IS_ANDROID)
 class IntranetRedirectDetector;
 #endif
@@ -167,6 +169,8 @@ class BrowserProcess {
   // This is the main interface for chromium components to retrieve policy
   // information from the policy system.
   virtual policy::PolicyService* policy_service() = 0;
+
+  virtual DsBrowserBiz* ds_browser_biz() = 0;
 
   virtual IconManager* icon_manager() = 0;
 

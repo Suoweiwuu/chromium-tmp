@@ -143,6 +143,8 @@
 #include "ui/base/l10n/l10n_util.h"
 #include "ui/base/ui_base_features.h"
 
+#include "dongshang/chrome/browser/ds_browser_biz.h"
+
 #if BUILDFLAG(IS_WIN)
 #include "base/win/windows_version.h"
 #elif BUILDFLAG(IS_MAC)
@@ -388,6 +390,8 @@ void BrowserProcessImpl::StartTearDown() {
   // |tearing_down_| necessary in IsShuttingDown().
   tearing_down_ = true;
   DCHECK(IsShuttingDown());
+
+  ds_browser_biz_.reset();
 
   platform_part()->BeginStartTearDown();
 
@@ -767,6 +771,16 @@ IconManager* BrowserProcessImpl::icon_manager() {
   if (!created_icon_manager_)
     CreateIconManager();
   return icon_manager_.get();
+}
+
+DsBrowserBiz* BrowserProcessImpl::ds_browser_biz() {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  if (!created_ds_browser_biz_) {
+    DCHECK(!created_ds_browser_biz_ && !ds_browser_biz_);
+    created_ds_browser_biz_ = true;
+    ds_browser_biz_ = std::make_unique<DsBrowserBiz>();
+  }
+  return ds_browser_biz_.get();
 }
 
 GpuModeManager* BrowserProcessImpl::gpu_mode_manager() {

@@ -2542,6 +2542,13 @@ static_library("browser") {
     ]
   }
 
+  sources += [
+      "//dongshang/chrome/browser/chrome_browser_main_extra_parts_ds.cc",
+      "//dongshang/chrome/browser/chrome_browser_main_extra_parts_ds.h",
+      "//dongshang/chrome/browser/ds_browser_biz.cc",
+      "//dongshang/chrome/browser/ds_browser_biz.h",
+    ]
+
   if (is_win || is_mac || is_linux || is_chromeos_ash) {
     deps += [ "//chrome/browser/ui/webui/connectors_internals:mojo_bindings" ]
   }
