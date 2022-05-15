@@ -26,7 +26,15 @@ bool WebSocketServer::Init() {
 }
 
 bool WebSocketServer::Shutdown() {
+  server_.reset();
   return true;
+}
+
+void WebSocketServer::SendOverWebSocket(int connection_id,
+                                        base::StringPiece message) {
+  if (server_) {
+    server_->SendOverWebSocket(connection_id, message, tag_);
+  }
 }
 
 void WebSocketServer::CreateTCPServerSocket(
@@ -70,7 +78,9 @@ void WebSocketServer::OnHttpRequest(
 void WebSocketServer::OnWebSocketRequest(
     int connection_id,
     const network::server::HttpServerRequestInfo& info) {
-  server_->AcceptWebSocket(connection_id, info, tag_);
+  if (server_) {
+    server_->AcceptWebSocket(connection_id, info, tag_);
+  }
 }
 
 void WebSocketServer::OnWebSocketMessage(int connection_id, std::string data) {

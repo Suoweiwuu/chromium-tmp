@@ -15,6 +15,7 @@ class WebSocketServer : public network::server::HttpServer::Delegate {
 
   bool Init();
   bool Shutdown();
+  void SendOverWebSocket(int connection_id, base::StringPiece message);
 
   // HttpServer::Delegate
   void OnConnect(int connection_id) override;
