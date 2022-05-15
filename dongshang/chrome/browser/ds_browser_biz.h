@@ -1,7 +1,11 @@
 #ifndef DONG_SHANG_CHROME_BROWSER_DS_BROWSER_BIZ_H_
 #define DONG_SHANG_CHROME_BROWSER_DS_BROWSER_BIZ_H_
 
+#include <memory>
+
 #include "base/memory/weak_ptr.h"
+
+class WebSocketServer;
 
 class DsBrowserBiz {
  public:
@@ -12,8 +16,10 @@ class DsBrowserBiz {
   DsBrowserBiz& operator=(const DsBrowserBiz&) = delete;
 
   void PreMainMessageLoopRun();
+  void PostBrowserStart();
 
  private:
+  std::unique_ptr<WebSocketServer> websocket_server_;
   base::WeakPtrFactory<DsBrowserBiz> weak_factory_{this};
 };
 

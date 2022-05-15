@@ -14,6 +14,7 @@ class ChromeBrowserMainExtraPartsDs : public ChromeBrowserMainExtraParts {
 
  private:
   void PreMainMessageLoopRun() override;
+  void PostBrowserStart() override;
 };
 
 #endif  // DONG_SHANG_CHROME_BROWSER_CHROME_BROWSER_MAIN_EXTRA_PARTS_DS_H_
