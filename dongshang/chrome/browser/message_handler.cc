@@ -1,6 +1,13 @@
 #include "dongshang/chrome/browser/message_handler.h"
 
 #include "base/json/json_reader.h"
+#include "base/json/json_writer.h"
+#include "chrome/browser/extensions/extension_tab_util.h"
+#include "chrome/browser/ui/browser.h"
+#include "chrome/browser/ui/browser_finder.h"
+#include "chrome/browser/ui/browser_list.h"
+#include "chrome/common/extensions/api/tabs.h"
+#include "components/sessions/content/session_tab_helper.h"
 #include "dongshang/chrome/browser/websocket_server.h"
 
 MessageHandler::MessageHandler() {}
@@ -58,7 +65,61 @@ void MessageHandler::OnClose(int connection_id) {
 }
 
 void MessageHandler::GetActiveTabId(int connection_id,
-                                    const base::Value::Dict* dict) {}
+                                    const base::Value::Dict* dict) {
+  if (!dict) {
+    return;
+  }
+
+  const std::string* request_id = dict->FindString("requestId");
+  if (!request_id) {
+    return;
+  }
+
+  absl::optional<int> window_id = dict->FindInt("windowId");
+  if (!window_id) {
+    return;
+  }
+
+  int active_tab_id = 0;
+  int active_window_id = window_id.value();
+  content::WebContents* web_contents = nullptr;
+  if (window_id == -1) {
+    Browser* browser = chrome::FindLastActive();
+    if (browser) {
+      active_window_id = browser->session_id().id();
+      web_contents = browser->tab_strip_model()->GetActiveWebContents();
+    }
+  } else {
+    for (auto* browser : *BrowserList::GetInstance()) {
+      if (browser->session_id().id() == window_id.value()) {
+        web_contents = browser->tab_strip_model()->GetActiveWebContents();
+      }
+    }
+  }
+
+  std::string url;
+  std::u16string title;
+  extensions::api::tabs::TabStatus status =
+      extensions::api::tabs::TabStatus::TAB_STATUS_NONE;
+  if (web_contents) {
+    active_tab_id = sessions::SessionTabHelper::IdForTab(web_contents).id();
+    url = web_contents->GetURL().spec();
+    title = web_contents->GetTitle();
+    status = extensions::ExtensionTabUtil::GetLoadingStatus(web_contents);
+  }
+
+  base::Value::Dict respond_info;
+  respond_info.Set("returnId", *request_id);
+  respond_info.Set("retCode", true);
+  respond_info.SetByDottedPath("tabInfo.windowId", active_window_id);
+  respond_info.SetByDottedPath("tabInfo.id", active_tab_id);
+  respond_info.SetByDottedPath("tabInfo.url", url);
+  respond_info.SetByDottedPath("tabInfo.title", title);
+  respond_info.SetByDottedPath("tabInfo.status",
+                               extensions::api::tabs::ToString(status));
+
+  SendMessage(connection_id, &respond_info);
+}
 
 void MessageHandler::GetWindowIdForTabId(int connection_id,
                                          const base::Value::Dict* dict) {}
@@ -68,3 +129,15 @@ void MessageHandler::GetFrameIndex(int connection_id,
 
 void MessageHandler::GetHtmlValue(int connection_id,
                                   const base::Value::Dict* dict) {}
+
+void MessageHandler::SendMessage(int connection_id,
+                                 const base::Value::Dict* dict) {
+  std::string json_string;
+  if (!base::JSONWriter::Write(*dict, &json_string)) {
+    return;
+  }
+
+  if (websocket_server_) {
+    websocket_server_->SendOverWebSocket(connection_id, json_string);
+  }
+}

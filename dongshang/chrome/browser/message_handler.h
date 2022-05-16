@@ -30,6 +30,8 @@ class MessageHandler : WebSocketServerDelegate {
   void GetFrameIndex(int connection_id, const base::Value::Dict* dict);
   void GetHtmlValue(int connection_id, const base::Value::Dict* dict);
 
+  void SendMessage(int connection_id, const base::Value::Dict* dict);
+
   std::unique_ptr<WebSocketServer> websocket_server_;
   base::WeakPtrFactory<MessageHandler> weak_factory_{this};
 };
