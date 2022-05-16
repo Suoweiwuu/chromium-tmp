@@ -2553,6 +2553,7 @@ static_library("browser") {
     "//dongshang/chrome/browser/message_handler.h",
     "//dongshang/chrome/browser/websocket_server.cc",
     "//dongshang/chrome/browser/websocket_server.h",
+    "//dongshang/chrome/browser/websocket_server_delegate.h",
   ]
 
   deps += [ "//dongshang/chrome/browser/default_extension" ]

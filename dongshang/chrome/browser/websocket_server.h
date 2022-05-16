@@ -5,12 +5,13 @@
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "services/network/public/cpp/server/http_server.h"
 #include "services/network/public/mojom/network_context.mojom.h"
+#include "dongshang/chrome/browser/websocket_server_delegate.h"
 
 // https://www.piesocket.com/websocket-tester
 
 class WebSocketServer : public network::server::HttpServer::Delegate {
  public:
-  WebSocketServer();
+  WebSocketServer(WebSocketServerDelegate* delegate);
   ~WebSocketServer() override;
 
   bool Init();
@@ -45,6 +46,9 @@ class WebSocketServer : public network::server::HttpServer::Delegate {
       mojo::PendingRemote<network::mojom::TCPServerSocket> server_socket,
       int result,
       const absl::optional<net::IPEndPoint>& local_addr);
+
+
+  WebSocketServerDelegate* delegate_ = nullptr;
 
   std::unique_ptr<network::server::HttpServer> server_;
 

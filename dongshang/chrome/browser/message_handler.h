@@ -4,19 +4,24 @@
 #include <memory>
 
 #include "base/memory/weak_ptr.h"
+#include "dongshang/chrome/browser/websocket_server_delegate.h"
 
 class WebSocketServer;
 
-class MessageHandler {
+class MessageHandler : WebSocketServerDelegate {
  public:
   MessageHandler();
-  ~MessageHandler();
+  ~MessageHandler() override;
 
   MessageHandler(const MessageHandler&) = delete;
   MessageHandler& operator=(const MessageHandler&) = delete;
 
   void StartWebSocketServer();
   void StopWebSocketServer();
+
+  void OnConnect(int connection_id) override;
+  void OnWebSocketMessage(int connection_id, std::string data) override;
+  void OnClose(int connection_id) override;
 
  private:
   std::unique_ptr<WebSocketServer> websocket_server_;

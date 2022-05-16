@@ -8,7 +8,8 @@ const net::NetworkTrafficAnnotationTag kServerTag =
     net::DefineNetworkTrafficAnnotation("ui_devtools_server", R"()");
 }
 
-WebSocketServer::WebSocketServer() : port_(9002), tag_(kServerTag) {}
+WebSocketServer::WebSocketServer(WebSocketServerDelegate* delegate)
+    : delegate_(delegate), port_(9002), tag_(kServerTag) {}
 
 WebSocketServer ::~WebSocketServer() {}
 
@@ -65,8 +66,9 @@ void WebSocketServer::MakeServer(
 
 // HttpServer::Delegate Implementation
 void WebSocketServer::OnConnect(int connection_id) {
-  int ia = 0;
-  ia++;
+  if (delegate_) {
+    delegate_->OnConnect(connection_id);
+  }
 }
 
 void WebSocketServer::OnHttpRequest(
@@ -84,11 +86,13 @@ void WebSocketServer::OnWebSocketRequest(
 }
 
 void WebSocketServer::OnWebSocketMessage(int connection_id, std::string data) {
-  int ia = 0;
-  ia++;
+  if (delegate_) {
+    delegate_->OnWebSocketMessage(connection_id, data);
+  }
 }
 
 void WebSocketServer::OnClose(int connection_id) {
-  int ia = 0;
-  ia++;
+  if (delegate_) {
+    delegate_->OnClose(connection_id);
+  }
 }
