@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "base/memory/weak_ptr.h"
+#include "base/values.h"
 #include "dongshang/chrome/browser/websocket_server_delegate.h"
 
 class WebSocketServer;
@@ -24,6 +25,11 @@ class MessageHandler : WebSocketServerDelegate {
   void OnClose(int connection_id) override;
 
  private:
+  void GetActiveTabId(int connection_id, const base::Value::Dict* dict);
+  void GetWindowIdForTabId(int connection_id, const base::Value::Dict* dict);
+  void GetFrameIndex(int connection_id, const base::Value::Dict* dict);
+  void GetHtmlValue(int connection_id, const base::Value::Dict* dict);
+
   std::unique_ptr<WebSocketServer> websocket_server_;
   base::WeakPtrFactory<MessageHandler> weak_factory_{this};
 };
