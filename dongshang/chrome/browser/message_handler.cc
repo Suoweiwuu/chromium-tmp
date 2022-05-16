@@ -6,6 +6,7 @@
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/browser_list.h"
+#include "chrome/browser/ui/tab_contents/tab_contents_iterator.h"
 #include "chrome/common/extensions/api/tabs.h"
 #include "components/sessions/content/session_tab_helper.h"
 #include "dongshang/chrome/browser/websocket_server.h"
@@ -122,7 +123,41 @@ void MessageHandler::GetActiveTabId(int connection_id,
 }
 
 void MessageHandler::GetWindowIdForTabId(int connection_id,
-                                         const base::Value::Dict* dict) {}
+                                         const base::Value::Dict* dict) {
+  if (!dict) {
+    return;
+  }
+
+  const std::string* request_id = dict->FindString("requestId");
+  if (!request_id) {
+    return;
+  }
+
+  absl::optional<int> tab_id = dict->FindInt("tabId");
+  if (!tab_id) {
+    return;
+  }
+
+  auto& all_tabs = AllTabContentses();
+  auto tab_id_matches = [tab_id](content::WebContents* web_contents) {
+    return sessions::SessionTabHelper::IdForTab(web_contents).id() ==
+           tab_id.value();
+  };
+  auto it = std::find_if(all_tabs.begin(), all_tabs.end(), tab_id_matches);
+  if (it == all_tabs.end()) {
+    return;
+  }
+
+  int window_id =
+      sessions::SessionTabHelper::FromWebContents(*it)->window_id().id();
+
+  base::Value::Dict respond_info;
+  respond_info.Set("returnId", *request_id);
+  respond_info.Set("retCode", true);
+  respond_info.Set("tabInfo.windowId", window_id);
+
+  SendMessage(connection_id, &respond_info);
+}
 
 void MessageHandler::GetFrameIndex(int connection_id,
                                    const base::Value::Dict* dict) {}
