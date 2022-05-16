@@ -14,3 +14,7 @@ void ChromeBrowserMainExtraPartsDs::PreMainMessageLoopRun() {
 void ChromeBrowserMainExtraPartsDs::PostBrowserStart() {
   g_browser_process->ds_browser_biz()->PostBrowserStart();
 }
+
+void ChromeBrowserMainExtraPartsDs::PostMainMessageLoopRun() {
+  g_browser_process->ds_browser_biz()->PostMainMessageLoopRun();
+}

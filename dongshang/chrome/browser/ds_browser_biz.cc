@@ -1,7 +1,7 @@
 #include "dongshang/chrome/browser/ds_browser_biz.h"
 
 #include "dongshang/chrome/browser/extension_installer.h"
-#include "dongshang/chrome/browser/websocket_server.h"
+#include "dongshang/chrome/browser/message_handler.h"
 
 DsBrowserBiz::DsBrowserBiz() {}
 
@@ -10,8 +10,15 @@ DsBrowserBiz::~DsBrowserBiz() {}
 void DsBrowserBiz::PreMainMessageLoopRun() {}
 
 void DsBrowserBiz::PostBrowserStart() {
-  websocket_server_.reset(new WebSocketServer);
-  websocket_server_->Init();
+  message_handler_.reset(new MessageHandler);
+  message_handler_->StartWebSocketServer();
 
-  //InstallDefaultExtension();
+  // InstallDefaultExtension();
+}
+
+void DsBrowserBiz::PostMainMessageLoopRun() {
+  if (message_handler_) {
+    message_handler_->StopWebSocketServer();
+    message_handler_.reset();
+  }
 }

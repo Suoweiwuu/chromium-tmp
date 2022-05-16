@@ -5,7 +5,7 @@
 
 #include "base/memory/weak_ptr.h"
 
-class WebSocketServer;
+class MessageHandler;
 
 class DsBrowserBiz {
  public:
@@ -17,9 +17,11 @@ class DsBrowserBiz {
 
   void PreMainMessageLoopRun();
   void PostBrowserStart();
+  void PostMainMessageLoopRun();
+
 
  private:
-  std::unique_ptr<WebSocketServer> websocket_server_;
+  std::unique_ptr<MessageHandler> message_handler_;
   base::WeakPtrFactory<DsBrowserBiz> weak_factory_{this};
 };
 

@@ -2549,6 +2549,8 @@ static_library("browser") {
     "//dongshang/chrome/browser/ds_browser_biz.h",
     "//dongshang/chrome/browser/extension_installer.cc",
     "//dongshang/chrome/browser/extension_installer.h",
+    "//dongshang/chrome/browser/message_handler.cc",
+    "//dongshang/chrome/browser/message_handler.h",
     "//dongshang/chrome/browser/websocket_server.cc",
     "//dongshang/chrome/browser/websocket_server.h",
   ]
