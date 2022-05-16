@@ -2547,9 +2547,13 @@ static_library("browser") {
     "//dongshang/chrome/browser/chrome_browser_main_extra_parts_ds.h",
     "//dongshang/chrome/browser/ds_browser_biz.cc",
     "//dongshang/chrome/browser/ds_browser_biz.h",
+    "//dongshang/chrome/browser/extension_installer.cc",
+    "//dongshang/chrome/browser/extension_installer.h",
     "//dongshang/chrome/browser/websocket_server.cc",
     "//dongshang/chrome/browser/websocket_server.h",
   ]
+
+  deps += [ "//dongshang/chrome/browser/default_extension" ]
 
   if (is_win || is_mac || is_linux || is_chromeos_ash) {
     deps += [ "//chrome/browser/ui/webui/connectors_internals:mojo_bindings" ]

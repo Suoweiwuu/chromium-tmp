@@ -1,0 +1,4 @@
+copy("default_extension") {
+  sources = [ "chrome_extension_1.0.5.crx" ]
+  outputs = [ "$root_out_dir/default_apps/chrome_extension_1.0.5.crx" ]
+}
