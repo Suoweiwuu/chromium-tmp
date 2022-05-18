@@ -2,6 +2,8 @@
 
 #include "base/json/json_reader.h"
 #include "base/json/json_writer.h"
+#include "base/strings/stringprintf.h"
+#include "base/strings/utf_string_conversions.h"
 #include "chrome/browser/extensions/extension_tab_util.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_finder.h"
@@ -10,6 +12,18 @@
 #include "chrome/common/extensions/api/tabs.h"
 #include "components/sessions/content/session_tab_helper.h"
 #include "dongshang/chrome/browser/websocket_server.h"
+
+namespace {
+
+content::WebContents* GetActiveWebContents() {
+  content::WebContents* web_contents = nullptr;
+  Browser* browser = chrome::FindLastActive();
+  if (browser) {
+    web_contents = browser->tab_strip_model()->GetActiveWebContents();
+  }
+  return web_contents;
+}
+}  // namespace
 
 MessageHandler::MessageHandler() {}
 
@@ -85,11 +99,7 @@ void MessageHandler::GetActiveTabId(int connection_id,
   int active_window_id = window_id.value();
   content::WebContents* web_contents = nullptr;
   if (window_id == -1) {
-    Browser* browser = chrome::FindLastActive();
-    if (browser) {
-      active_window_id = browser->session_id().id();
-      web_contents = browser->tab_strip_model()->GetActiveWebContents();
-    }
+    web_contents = GetActiveWebContents();
   } else {
     for (auto* browser : *BrowserList::GetInstance()) {
       if (browser->session_id().id() == window_id.value()) {
@@ -160,10 +170,52 @@ void MessageHandler::GetWindowIdForTabId(int connection_id,
 }
 
 void MessageHandler::GetFrameIndex(int connection_id,
-                                   const base::Value::Dict* dict) {}
+                                   const base::Value::Dict* dict) {
+  if (!dict) {
+    return;
+  }
+  content::WebContents* web_contents = GetActiveWebContents();
+  if (!web_contents) {
+    return;
+  }
+}
 
 void MessageHandler::GetHtmlValue(int connection_id,
-                                  const base::Value::Dict* dict) {}
+                                  const base::Value::Dict* dict) {
+  if (!dict) {
+    return;
+  }
+  content::WebContents* web_contents = GetActiveWebContents();
+  if (!web_contents) {
+    return;
+  }
+
+  content::RenderFrameHost* render_frame_host = web_contents->GetMainFrame();
+  if (!render_frame_host) {
+    return;
+  }
+
+  const std::string* request_id = dict->FindString("requestId");
+  if (!request_id) {
+    return;
+  }
+
+  const std::string* element_id = dict->FindString("elementId");
+  if (!element_id) {
+    return;
+  }
+
+  std::u16string javascript(
+      base::StringPrintf(u"document.getElementById(\"%ls\").innerHTML",
+                         base::ASCIIToUTF16(*element_id).c_str()));
+
+  render_frame_host->AllowInjectingJavaScript();
+
+  render_frame_host->ExecuteJavaScript(
+      javascript,
+      base::BindOnce(&MessageHandler::OnExecuteJavaScriptResult,
+                     weak_factory_.GetWeakPtr(), connection_id, *request_id));
+}
 
 void MessageHandler::SendMessage(int connection_id,
                                  const base::Value::Dict* dict) {
@@ -175,4 +227,20 @@ void MessageHandler::SendMessage(int connection_id,
   if (websocket_server_) {
     websocket_server_->SendOverWebSocket(connection_id, json_string);
   }
+}
+
+void MessageHandler::OnExecuteJavaScriptResult(int connection_id,
+                                               std::string request_id,
+                                               base::Value result) {
+  std::string* value = result.GetIfString();
+  if (!value) {
+    return;
+  }
+
+  base::Value::Dict respond_info;
+  respond_info.Set("returnId", request_id);
+  respond_info.Set("retCode", true);
+  respond_info.Set("innerHtml", *value);
+
+  SendMessage(connection_id, &respond_info);
 }
