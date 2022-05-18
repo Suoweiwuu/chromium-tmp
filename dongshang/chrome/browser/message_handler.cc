@@ -69,6 +69,8 @@ void MessageHandler::OnWebSocketMessage(int connection_id, std::string data) {
     GetFrameIndex(connection_id, dict);
   } else if (*command_name == std::string("GetHtmlValue")) {
     GetHtmlValue(connection_id, dict);
+  } else if (*command_name == std::string("CaptureHtmlElement")) {
+    CaptureHtmlElement(connection_id, dict);
   } else {
     LOG(ERROR) << "unknown command name:" << command_name->c_str();
   }
@@ -215,6 +217,32 @@ void MessageHandler::GetHtmlValue(int connection_id,
       javascript,
       base::BindOnce(&MessageHandler::OnExecuteJavaScriptResult,
                      weak_factory_.GetWeakPtr(), connection_id, *request_id));
+}
+
+void MessageHandler::CaptureHtmlElement(int connection_id,
+                                        const base::Value::Dict* dict) {
+  if (!dict) {
+    return;
+  }
+  content::WebContents* web_contents = GetActiveWebContents();
+  if (!web_contents) {
+    return;
+  }
+
+  content::RenderFrameHost* render_frame_host = web_contents->GetMainFrame();
+  if (!render_frame_host) {
+    return;
+  }
+
+  const std::string* request_id = dict->FindString("requestId");
+  if (!request_id) {
+    return;
+  }
+
+  const std::string* element_id = dict->FindString("elementId");
+  if (!element_id) {
+    return;
+  }
 }
 
 void MessageHandler::SendMessage(int connection_id,

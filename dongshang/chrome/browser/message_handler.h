@@ -29,6 +29,7 @@ class MessageHandler : WebSocketServerDelegate {
   void GetWindowIdForTabId(int connection_id, const base::Value::Dict* dict);
   void GetFrameIndex(int connection_id, const base::Value::Dict* dict);
   void GetHtmlValue(int connection_id, const base::Value::Dict* dict);
+  void CaptureHtmlElement(int connection_id, const base::Value::Dict* dict);
 
   void SendMessage(int connection_id, const base::Value::Dict* dict);
   void OnExecuteJavaScriptResult(int connection_id,
