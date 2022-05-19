@@ -23,6 +23,27 @@ content::WebContents* GetActiveWebContents() {
   }
   return web_contents;
 }
+
+content::RenderFrameHost* FindRenderFrameHostByID(
+    content::WebContents* web_contents,
+    int id) {
+  content::RenderFrameHost* rfh = nullptr;
+
+  web_contents->GetMainFrame()->ForEachRenderFrameHost(base::BindRepeating(
+      [](content::WebContents* web_contents, int id,
+         content::RenderFrameHost** rfh,
+         content::RenderFrameHost* render_frame_host) {
+        if (render_frame_host->GetFrameTreeNodeId() == id) {
+          *rfh = render_frame_host;
+          return content::RenderFrameHost::FrameIterationAction::kStop;
+        }
+        return content::RenderFrameHost::FrameIterationAction::kContinue;
+      },
+      web_contents, id, &rfh));
+
+  return rfh;
+}
+
 }  // namespace
 
 MessageHandler::MessageHandler() {}
@@ -180,6 +201,63 @@ void MessageHandler::GetFrameIndex(int connection_id,
   if (!web_contents) {
     return;
   }
+
+  const std::string* request_id = dict->FindString("requestId");
+  if (!request_id) {
+    return;
+  }
+
+  absl::optional<int> frame_id = dict->FindInt("frameId");
+  if (!frame_id) {
+    return;
+  }
+
+  content::RenderFrameHost* render_frame_host =
+      FindRenderFrameHostByID(web_contents, frame_id.value());
+  if (!render_frame_host) {
+    return;
+  }
+
+  content::RenderFrameHost* parent_render_frame_host =
+      render_frame_host->GetParent();
+  if (!parent_render_frame_host) {
+    return;
+  }
+
+  LOG(ERROR) << "GetMainFrame:"
+             << web_contents->GetMainFrame()->GetFrameTreeNodeId();
+
+  int frame_index = -1;
+  web_contents->GetMainFrame()->ForEachRenderFrameHost(base::BindRepeating(
+      [](content::RenderFrameHost* parent_render_frame_host, int id,
+         int& frame_index, content::RenderFrameHost* render_frame_host) {
+        if (render_frame_host->GetParent()) {
+          if (render_frame_host->GetParent() == parent_render_frame_host) {
+            frame_index++;
+            if (render_frame_host->GetFrameTreeNodeId() == id) {
+              return content::RenderFrameHost::FrameIterationAction::kStop;
+            }
+          }
+        }
+
+        if (render_frame_host->GetParent()) {
+          LOG(ERROR) << "this=" << render_frame_host
+                     << " id=" << render_frame_host->GetFrameTreeNodeId()
+                     << " parent=" << render_frame_host->GetParent()
+                     << " parent_id="
+                     << render_frame_host->GetParent()->GetFrameTreeNodeId();
+        }
+
+        return content::RenderFrameHost::FrameIterationAction::kContinue;
+      },
+      parent_render_frame_host, frame_id.value(), std::ref(frame_index)));
+
+  base::Value::Dict respond_info;
+  respond_info.Set("returnId", *request_id);
+  respond_info.Set("retCode", true);
+  respond_info.Set("index", frame_index);
+
+  SendMessage(connection_id, &respond_info);
 }
 
 void MessageHandler::GetHtmlValue(int connection_id,
