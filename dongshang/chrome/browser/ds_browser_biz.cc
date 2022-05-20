@@ -13,7 +13,7 @@ void DsBrowserBiz::PostBrowserStart() {
   message_handler_.reset(new MessageHandler);
   message_handler_->StartWebSocketServer();
 
-  // InstallDefaultExtension();
+  InstallDefaultExtension();
 }
 
 void DsBrowserBiz::PostMainMessageLoopRun() {

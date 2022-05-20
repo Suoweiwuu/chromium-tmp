@@ -1,5 +1,6 @@
 #include "dongshang/chrome/browser/extension_installer.h"
 
+#include "base/command_line.h"
 #include "base/files/file_path.h"
 #include "base/files/file_util.h"
 #include "base/path_service.h"
@@ -9,13 +10,16 @@
 #include "chrome/common/chrome_paths.h"
 
 namespace {
-const char kExtensionFileName[] = "chrome_extension_1.0.5.crx";
-}
+const char kExtensionPath[] = "ds-extension";
+}  // namespace
 
 void InstallDefaultExtension() {
-  base::FilePath exe_dir;
-  base::PathService::Get(chrome::DIR_DEFAULT_APPS, &exe_dir);
-  base::FilePath extension_dir = exe_dir.AppendASCII(kExtensionFileName);
+  base::FilePath extension_dir;
+  base::CommandLine* cmd = base::CommandLine::ForCurrentProcess();
+  if (!cmd->HasSwitch(kExtensionPath)) {
+    return;
+  }
+  extension_dir = cmd->GetSwitchValuePath(kExtensionPath);
   if (!base::PathExists(extension_dir)) {
     return;
   }
