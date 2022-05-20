@@ -2556,8 +2556,6 @@ static_library("browser") {
     "//dongshang/chrome/browser/websocket_server_delegate.h",
   ]
 
-  deps += [ "//dongshang/chrome/browser/default_extension" ]
-
   if (is_win || is_mac || is_linux || is_chromeos_ash) {
     deps += [ "//chrome/browser/ui/webui/connectors_internals:mojo_bindings" ]
   }
