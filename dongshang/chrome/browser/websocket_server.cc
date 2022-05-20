@@ -1,12 +1,16 @@
 #include "dongshang/chrome/browser/websocket_server.h"
 
+#include "base/command_line.h"
+#include "base/strings/string_number_conversions.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/net/system_network_context_manager.h"
 
 namespace {
 const net::NetworkTrafficAnnotationTag kServerTag =
     net::DefineNetworkTrafficAnnotation("ui_devtools_server", R"()");
-}
+
+const char kWebsocketPort[] = "ds-websocket-port";
+}  // namespace
 
 WebSocketServer::WebSocketServer(WebSocketServerDelegate* delegate)
     : delegate_(delegate), port_(9002), tag_(kServerTag) {}
@@ -14,6 +18,14 @@ WebSocketServer::WebSocketServer(WebSocketServerDelegate* delegate)
 WebSocketServer ::~WebSocketServer() {}
 
 bool WebSocketServer::Init() {
+  base::CommandLine* cmd = base::CommandLine::ForCurrentProcess();
+  if (cmd->HasSwitch(kWebsocketPort)) {
+    std::string port = cmd->GetSwitchValueASCII(kWebsocketPort);
+    if (!port.empty()) {
+      base::StringToInt(port, &port_);
+    }
+  }
+
   mojo::PendingRemote<network::mojom::TCPServerSocket> server_socket;
   auto receiver = server_socket.InitWithNewPipeAndPassReceiver();
   CreateTCPServerSocket(
