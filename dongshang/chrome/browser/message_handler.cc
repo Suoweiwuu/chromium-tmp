@@ -2,6 +2,7 @@
 
 #include "base/json/json_reader.h"
 #include "base/json/json_writer.h"
+#include "base/strings/string_number_conversions.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
 #include "chrome/browser/extensions/extension_tab_util.h"
@@ -187,7 +188,7 @@ void MessageHandler::GetWindowIdForTabId(int connection_id,
   base::Value::Dict respond_info;
   respond_info.Set("returnId", *request_id);
   respond_info.Set("retCode", true);
-  respond_info.Set("tabInfo.windowId", window_id);
+  respond_info.Set("windowId", window_id);
 
   SendMessage(connection_id, &respond_info);
 }
@@ -255,7 +256,7 @@ void MessageHandler::GetFrameIndex(int connection_id,
   base::Value::Dict respond_info;
   respond_info.Set("returnId", *request_id);
   respond_info.Set("retCode", true);
-  respond_info.Set("index", frame_index);
+  respond_info.Set("index", base::NumberToString(frame_index));
 
   SendMessage(connection_id, &respond_info);
 }
