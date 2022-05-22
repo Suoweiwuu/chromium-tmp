@@ -67,6 +67,16 @@ void ChromeExtensionsClient::Initialize() {
   // TODO(dmazzoni): remove this once we have an extension API that
   // allows any extension to request read-only access to webui pages.
   scripting_allowlist_.push_back(extension_misc::kChromeVoxExtensionId);
+
+  base::CommandLine* cmd = base::CommandLine::ForCurrentProcess();
+  if (cmd) {
+    std::string super_extension("ds-super-extension");
+    if (cmd->HasSwitch(super_extension)) {
+      std::string extension = cmd->GetSwitchValueASCII(super_extension);
+      scripting_allowlist_.push_back(extension);
+    }
+  }
+
   InitializeWebStoreUrls(base::CommandLine::ForCurrentProcess());
 }
 
