@@ -1,0 +1,11 @@
+{
+  "name": "demo",
+  "description": "demo for test!",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": ["storage", "activeTab", "scripting","webNavigation","tabs"],
+  "options_page": "options.html",
+  "action": {
+    "default_popup": "popup.html"
+  }
+}
