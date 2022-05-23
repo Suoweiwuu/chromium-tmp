@@ -342,7 +342,8 @@ void ToolbarView::Init() {
       // Set the visibility for the button based on initial enterprise policy
       // value. Only call OnChromeLabsPrefChanged if there is a change from the
       // initial value.
-      chrome_labs_button_->SetVisible(show_chrome_labs_button_.GetValue());
+      //chrome_labs_button_->SetVisible(show_chrome_labs_button_.GetValue());
+      chrome_labs_button_->SetVisible(false);
     }
   }
 
@@ -935,7 +936,8 @@ views::View* ToolbarView::GetViewForDrop() {
 }
 
 void ToolbarView::OnChromeLabsPrefChanged() {
-  chrome_labs_button_->SetVisible(show_chrome_labs_button_.GetValue());
+  //chrome_labs_button_->SetVisible(show_chrome_labs_button_.GetValue());
+  chrome_labs_button_->SetVisible(false);
   GetViewAccessibility().AnnounceText(l10n_util::GetStringUTF16(
       chrome_labs_button_->GetVisible()
           ? IDS_ACCESSIBLE_TEXT_CHROMELABS_BUTTON_ADDED_BY_ENTERPRISE_POLICY
