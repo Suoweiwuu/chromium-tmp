@@ -5679,6 +5679,21 @@ void RenderFrameHostImpl::DidFinishLoad(const GURL& validated_url) {
   }
 
   delegate_->OnDidFinishLoad(this, validated_url);
+
+    int frame_id = GetFrameTreeNodeId();
+  std::u16string javascript(
+      base::StringPrintf(uR"(
+Object.defineProperty(this, 'frame_id', {
+  enumerable: true,
+  configurable: false,
+  writable: false,
+  value: %d
+});
+)",
+                         frame_id));
+
+  AllowInjectingJavaScript();
+  ExecuteJavaScript(javascript, base::NullCallback());
 }
 
 void RenderFrameHostImpl::DispatchLoad() {
