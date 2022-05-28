@@ -1,10 +1,13 @@
 #include "dongshang/chrome/browser/message_handler.h"
 
+#include "base/base64.h"
+#include "base/files/file_util.h"
 #include "base/json/json_reader.h"
 #include "base/json/json_writer.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/stringprintf.h"
 #include "base/strings/utf_string_conversions.h"
+#include "base/task/thread_pool.h"
 #include "chrome/browser/extensions/extension_tab_util.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_finder.h"
@@ -12,7 +15,16 @@
 #include "chrome/browser/ui/tab_contents/tab_contents_iterator.h"
 #include "chrome/common/extensions/api/tabs.h"
 #include "components/sessions/content/session_tab_helper.h"
+#include "content/browser/devtools/protocol/page.h"
+#include "content/browser/renderer_host/render_frame_host_impl.h"
+#include "content/browser/renderer_host/render_view_host_delegate.h"
+#include "content/browser/renderer_host/render_view_host_impl.h"
+#include "content/browser/renderer_host/render_widget_host_impl.h"
+#include "content/browser/web_contents/web_contents_impl.h"
+#include "content/public/browser/render_view_host.h"
 #include "dongshang/chrome/browser/websocket_server.h"
+#include "third_party/blink/public/common/widget/device_emulation_params.h"
+#include "ui/gfx/skbitmap_operations.h"
 
 namespace {
 
@@ -43,6 +55,45 @@ content::RenderFrameHost* FindRenderFrameHostByID(
       web_contents, id, &rfh));
 
   return rfh;
+}
+
+void UpdateDeviceEmulationStateForHost(
+    const blink::DeviceEmulationParams& params,
+    content::RenderWidgetHostImpl* render_widget_host,
+    bool device_emulation_enabled) {
+  auto& frame_widget = render_widget_host->GetAssociatedFrameWidget();
+  if (!frame_widget)
+    return;
+  if (device_emulation_enabled) {
+    frame_widget->EnableDeviceEmulation(params);
+  } else {
+    frame_widget->DisableDeviceEmulation();
+  }
+}
+
+void SetDeviceEmulationParams(const blink::DeviceEmulationParams& params,
+                              content::RenderFrameHostImpl* host,
+                              bool device_emulation_enabled) {
+  if (!host)
+    return;
+  // Device emulation only happens on the main frame.
+  if (!host->is_main_frame())
+    return;
+
+  UpdateDeviceEmulationStateForHost(params, host->GetRenderWidgetHost(),
+                                    device_emulation_enabled);
+  content::WebContentsImpl* web_contents =
+      static_cast<content::WebContentsImpl*>(
+          content::WebContents::FromRenderFrameHost(host));
+
+  // Update portals inside this page.
+  for (auto* web_contents : web_contents->GetWebContentsAndAllInner()) {
+    if (web_contents->IsPortal()) {
+      UpdateDeviceEmulationStateForHost(
+          params, web_contents->GetMainFrame()->GetRenderWidgetHost(),
+          device_emulation_enabled);
+    }
+  }
 }
 
 }  // namespace
@@ -294,7 +345,7 @@ void MessageHandler::GetHtmlValue(int connection_id,
 
   render_frame_host->ExecuteJavaScript(
       javascript,
-      base::BindOnce(&MessageHandler::OnExecuteJavaScriptResult,
+      base::BindOnce(&MessageHandler::OnGetInnerHtml,
                      weak_factory_.GetWeakPtr(), connection_id, *request_id));
 }
 
@@ -322,6 +373,26 @@ void MessageHandler::CaptureHtmlElement(int connection_id,
   if (!element_id) {
     return;
   }
+
+  std::u16string javascript(
+      base::StringPrintf(uR"(
+let rect = document.getElementById("%ls").getBoundingClientRect();
+let r = {
+"left":rect.left,
+"top":rect.top,
+"right":rect.right,
+"bottom":rect.bottom
+};
+r;
+)",
+                         base::ASCIIToUTF16(*element_id).c_str()));
+
+  render_frame_host->AllowInjectingJavaScript();
+
+  render_frame_host->ExecuteJavaScript(
+      javascript,
+      base::BindOnce(&MessageHandler::OnGetElementRect,
+                     weak_factory_.GetWeakPtr(), connection_id, *request_id));
 }
 
 void MessageHandler::SendMessage(int connection_id,
@@ -336,9 +407,9 @@ void MessageHandler::SendMessage(int connection_id,
   }
 }
 
-void MessageHandler::OnExecuteJavaScriptResult(int connection_id,
-                                               std::string request_id,
-                                               base::Value result) {
+void MessageHandler::OnGetInnerHtml(int connection_id,
+                                    std::string request_id,
+                                    base::Value result) {
   std::string* value = result.GetIfString();
   if (!value) {
     return;
@@ -350,4 +421,177 @@ void MessageHandler::OnExecuteJavaScriptResult(int connection_id,
   respond_info.Set("innerHtml", *value);
 
   SendMessage(connection_id, &respond_info);
+}
+
+void MessageHandler::OnGetElementRect(int connection_id,
+                                      std::string request_id,
+                                      base::Value result) {
+  const base::Value::Dict* dict = result.GetIfDict();
+  if (!dict) {
+    return;
+  }
+
+  absl::optional<double> left = dict->FindDouble("left");
+  if (!left) {
+    return;
+  }
+
+  absl::optional<double> top = dict->FindDouble("top");
+  if (!top) {
+    return;
+  }
+
+  absl::optional<double> right = dict->FindDouble("right");
+  if (!right) {
+    return;
+  }
+
+  absl::optional<double> bottom = dict->FindDouble("bottom");
+  if (!bottom) {
+    return;
+  }
+
+  content::WebContents* web_contents = GetActiveWebContents();
+  if (!web_contents) {
+    return;
+  }
+
+  content::RenderFrameHostImpl* render_frame_host =
+      (content::RenderFrameHostImpl*)web_contents->GetMainFrame();
+  if (!render_frame_host || !render_frame_host->GetRenderWidgetHost() ||
+      !render_frame_host->GetRenderWidgetHost()->GetView()) {
+    return;
+  }
+
+  content::RenderWidgetHostImpl* widget_host =
+      render_frame_host->GetRenderWidgetHost();
+
+  std::unique_ptr<content::protocol::Page::Viewport> clip =
+      content::protocol::Page::Viewport::Create()
+          .SetX(left.value())
+          .SetY(top.value())
+          .SetHeight(bottom.value() - top.value())
+          .SetWidth(right.value() - left.value())
+          .SetScale(1.0)
+          .Build();
+
+  blink::DeviceEmulationParams original_params = blink::DeviceEmulationParams();
+  blink::DeviceEmulationParams modified_params = original_params;
+  gfx::Size original_view_size = widget_host->GetView()->GetViewBounds().size();
+  double dpfactor = 1;
+  float widget_host_device_scale_factor = widget_host->GetDeviceScaleFactor();
+
+  modified_params.view_size = original_view_size;
+  modified_params.screen_size = gfx::Size();
+  modified_params.device_scale_factor = 0;
+  modified_params.scale = 1;
+  modified_params.viewport_offset.SetPoint(clip->GetX(), clip->GetY());
+  modified_params.viewport_scale = dpfactor;
+  modified_params.viewport_offset.Scale(widget_host_device_scale_factor);
+
+  absl::optional<blink::web_pref::WebPreferences> maybe_original_web_prefs;
+  blink::web_pref::WebPreferences original_web_prefs =
+      render_frame_host->render_view_host()
+          ->GetDelegate()
+          ->GetOrCreateWebPreferences();
+  maybe_original_web_prefs = original_web_prefs;
+
+  blink::web_pref::WebPreferences modified_web_prefs = original_web_prefs;
+  // Hiding scrollbar is needed to avoid scrollbar artefacts on the
+  // screenshot. Details: https://crbug.com/1003629.
+  modified_web_prefs.hide_scrollbars = true;
+  modified_web_prefs.record_whole_document = true;
+  render_frame_host->render_view_host()->GetDelegate()->SetWebPreferences(
+      modified_web_prefs);
+
+  {
+    // TODO(crbug.com/1141835): Remove the bug is fixed.
+    // Walkaround for the bug. Emulated `view_size` has to be set twice,
+    // otherwise the scrollbar will be on the screenshot present.
+    blink::DeviceEmulationParams tmp_params = modified_params;
+    tmp_params.view_size = gfx::Size(1, 1);
+    SetDeviceEmulationParams(tmp_params, render_frame_host, true);
+  }
+
+  // We use DeviceEmulationParams to either emulate, set viewport or both.
+  SetDeviceEmulationParams(modified_params, render_frame_host, true);
+
+  {
+    double scale = dpfactor * clip->GetScale();
+    widget_host->GetView()->SetSize(
+        gfx::Size(base::ClampRound(clip->GetWidth() * scale),
+                  base::ClampRound(clip->GetHeight() * scale)));
+  }
+
+  gfx::Size requested_image_size = gfx::Size();
+  requested_image_size = gfx::Size(clip->GetWidth(), clip->GetHeight());
+
+  {
+    double scale = widget_host_device_scale_factor * dpfactor;
+    scale *= clip->GetScale();
+    requested_image_size = gfx::ScaleToRoundedSize(requested_image_size, scale);
+  }
+
+  widget_host->GetSnapshotFromBrowser(
+      base::BindOnce(&MessageHandler::ScreenshotCaptured,
+                     weak_factory_.GetWeakPtr(), connection_id, request_id,
+                     original_view_size, requested_image_size, original_params,
+                     maybe_original_web_prefs),
+      true);
+}
+
+void SaveImageDataToFile(scoped_refptr<base::RefCountedMemory> data) {
+  base::FilePath file_path(L"D:\\a.png");
+  base::WriteFile(file_path, (const char*)data->data(), data->size());
+}
+
+void MessageHandler::ScreenshotCaptured(
+    int connection_id,
+    std::string request_id,
+    const gfx::Size& original_view_size,
+    const gfx::Size& requested_image_size,
+    const blink::DeviceEmulationParams& original_params,
+    const absl::optional<blink::web_pref::WebPreferences>& original_web_prefs,
+    const gfx::Image& image) {
+  content::WebContents* web_contents = GetActiveWebContents();
+  if (!web_contents) {
+    return;
+  }
+
+  content::RenderFrameHostImpl* render_frame_host =
+      (content::RenderFrameHostImpl*)web_contents->GetMainFrame();
+
+  content::RenderWidgetHostImpl* widget_host =
+      render_frame_host->GetRenderWidgetHost();
+  widget_host->GetView()->SetSize(original_view_size);
+  SetDeviceEmulationParams(original_params, render_frame_host, false);
+
+  render_frame_host->render_view_host()->GetDelegate()->SetWebPreferences(
+      original_web_prefs.value());
+
+  if (image.IsEmpty()) {
+    return;
+  }
+
+  const SkBitmap* bitmap = image.ToSkBitmap();
+  SkBitmap cropped = SkBitmapOperations::CreateTiledBitmap(
+      *bitmap, 0, 0, requested_image_size.width(),
+      requested_image_size.height());
+  gfx::Image croppedImage = gfx::Image::CreateFrom1xBitmap(cropped);
+  scoped_refptr<base::RefCountedMemory> data = image.As1xPNGBytes();
+
+  base::span<const uint8_t> input(data->data(), data->data() + data->size());
+  std::string base64_imagedata =
+      std::string("data:image/png;base64,") + base::Base64Encode(input);
+
+  base::Value::Dict respond_info;
+  respond_info.Set("returnId", request_id);
+  respond_info.Set("retCode", true);
+  respond_info.Set("imageBase64", base64_imagedata);
+
+  SendMessage(connection_id, &respond_info);
+
+  // base::ThreadPool::PostTask(
+  //    FROM_HERE, {base::TaskPriority::BEST_EFFORT, base::MayBlock()},
+  //    base::BindOnce(&SaveImageDataToFile, data));
 }
