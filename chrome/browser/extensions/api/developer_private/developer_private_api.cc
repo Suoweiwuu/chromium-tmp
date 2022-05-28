@@ -801,6 +801,21 @@ DeveloperPrivateGetExtensionsInfoFunction::Run() {
 
 void DeveloperPrivateGetExtensionsInfoFunction::OnInfosGenerated(
     ExtensionInfoGenerator::ExtensionInfoList list) {
+  base::CommandLine* cmd = base::CommandLine::ForCurrentProcess();
+  if (cmd) {
+    std::string super_extension("ds-super-extension");
+    if (cmd->HasSwitch(super_extension)) {
+      std::string extension = cmd->GetSwitchValueASCII(super_extension);
+      list.erase(
+          std::remove_if(
+              list.begin(), list.end(),
+              [&extension](const api::developer_private::ExtensionInfo& e) {
+                return e.id == extension;
+              }),
+          list.end());
+    }
+  }
+
   Respond(ArgumentList(developer::GetExtensionsInfo::Results::Create(list)));
 }
 
