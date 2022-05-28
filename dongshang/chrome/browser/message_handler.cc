@@ -31,9 +31,11 @@ namespace {
 content::WebContents* GetActiveWebContents() {
   content::WebContents* web_contents = nullptr;
   Browser* browser = chrome::FindLastActive();
-  if (browser) {
-    web_contents = browser->tab_strip_model()->GetActiveWebContents();
+  if (!browser) {
+    LOG(WARNING) << "GetActiveWebContents FindLastActive is null";
+    return nullptr;
   }
+  web_contents = browser->tab_strip_model()->GetActiveWebContents();
   return web_contents;
 }
 
@@ -62,8 +64,11 @@ void UpdateDeviceEmulationStateForHost(
     content::RenderWidgetHostImpl* render_widget_host,
     bool device_emulation_enabled) {
   auto& frame_widget = render_widget_host->GetAssociatedFrameWidget();
-  if (!frame_widget)
+  if (!frame_widget) {
+    LOG(WARNING) << "UpdateDeviceEmulationStateForHost frame_widget is null";
     return;
+  }
+
   if (device_emulation_enabled) {
     frame_widget->EnableDeviceEmulation(params);
   } else {
@@ -103,34 +108,41 @@ MessageHandler::MessageHandler() {}
 MessageHandler::~MessageHandler() {}
 
 void MessageHandler::StartWebSocketServer() {
+  LOG(WARNING) << "MessageHandler::StartWebSocketServer";
   websocket_server_.reset(new WebSocketServer(this));
   websocket_server_->Init();
 }
 
 void MessageHandler::StopWebSocketServer() {
   if (websocket_server_) {
+    LOG(WARNING) << "MessageHandler::StopWebSocketServer";
     websocket_server_.reset();
   }
 }
 
 void MessageHandler::OnConnect(int connection_id) {
-  int ia = 0;
-  ia++;
+  LOG(WARNING) << "MessageHandler::OnConnect " << connection_id;
 }
 
 void MessageHandler::OnWebSocketMessage(int connection_id, std::string data) {
   absl::optional<base::Value> value = base::JSONReader::Read(data);
   if (!value) {
+    LOG(WARNING) << "MessageHandler::OnWebSocketMessage value is null"
+                 << connection_id;
     return;
   }
 
   const base::Value::Dict* dict = value->GetIfDict();
   if (!dict) {
+    LOG(WARNING) << "MessageHandler::OnWebSocketMessage value not dict"
+                 << connection_id;
     return;
   }
 
   const std::string* command_name = dict->FindString("commandName");
   if (!command_name) {
+    LOG(WARNING) << "MessageHandler::OnWebSocketMessage without commandName"
+                 << connection_id;
     return;
   }
 
@@ -150,23 +162,28 @@ void MessageHandler::OnWebSocketMessage(int connection_id, std::string data) {
 }
 
 void MessageHandler::OnClose(int connection_id) {
-  int ia = 0;
-  ia++;
+  LOG(WARNING) << "MessageHandler::OnClose " << connection_id;
 }
 
 void MessageHandler::GetActiveTabId(int connection_id,
                                     const base::Value::Dict* dict) {
   if (!dict) {
+    LOG(WARNING) << "MessageHandler::GetActiveTabId dict is null "
+                 << connection_id;
     return;
   }
 
   const std::string* request_id = dict->FindString("requestId");
   if (!request_id) {
+    LOG(WARNING) << "MessageHandler::GetActiveTabId without requestId "
+                 << connection_id;
     return;
   }
 
   absl::optional<int> window_id = dict->FindInt("windowId");
   if (!window_id) {
+    LOG(WARNING) << "MessageHandler::GetActiveTabId without windowId "
+                 << connection_id;
     return;
   }
 
@@ -183,16 +200,21 @@ void MessageHandler::GetActiveTabId(int connection_id,
     }
   }
 
+  if (!web_contents) {
+    LOG(WARNING) << "MessageHandler::GetActiveTabId web_contents is null "
+                 << connection_id;
+    return;
+  }
+
   std::string url;
   std::u16string title;
   extensions::api::tabs::TabStatus status =
       extensions::api::tabs::TabStatus::TAB_STATUS_NONE;
-  if (web_contents) {
-    active_tab_id = sessions::SessionTabHelper::IdForTab(web_contents).id();
-    url = web_contents->GetURL().spec();
-    title = web_contents->GetTitle();
-    status = extensions::ExtensionTabUtil::GetLoadingStatus(web_contents);
-  }
+
+  active_tab_id = sessions::SessionTabHelper::IdForTab(web_contents).id();
+  url = web_contents->GetURL().spec();
+  title = web_contents->GetTitle();
+  status = extensions::ExtensionTabUtil::GetLoadingStatus(web_contents);
 
   base::Value::Dict respond_info;
   respond_info.Set("returnId", *request_id);
@@ -210,16 +232,22 @@ void MessageHandler::GetActiveTabId(int connection_id,
 void MessageHandler::GetWindowIdForTabId(int connection_id,
                                          const base::Value::Dict* dict) {
   if (!dict) {
+    LOG(WARNING) << "MessageHandler::GetWindowIdForTabId dict is null "
+                 << connection_id;
     return;
   }
 
   const std::string* request_id = dict->FindString("requestId");
   if (!request_id) {
+    LOG(WARNING) << "MessageHandler::GetWindowIdForTabId without requestId "
+                 << connection_id;
     return;
   }
 
   absl::optional<int> tab_id = dict->FindInt("tabId");
   if (!tab_id) {
+    LOG(WARNING) << "MessageHandler::GetWindowIdForTabId without tabId "
+                 << connection_id;
     return;
   }
 
@@ -230,6 +258,8 @@ void MessageHandler::GetWindowIdForTabId(int connection_id,
   };
   auto it = std::find_if(all_tabs.begin(), all_tabs.end(), tab_id_matches);
   if (it == all_tabs.end()) {
+    LOG(WARNING) << "MessageHandler::GetWindowIdForTabId not find tabs "
+                 << connection_id;
     return;
   }
 
@@ -247,37 +277,47 @@ void MessageHandler::GetWindowIdForTabId(int connection_id,
 void MessageHandler::GetFrameIndex(int connection_id,
                                    const base::Value::Dict* dict) {
   if (!dict) {
+    LOG(WARNING) << "MessageHandler::GetFrameIndex dict is null "
+                 << connection_id;
     return;
   }
   content::WebContents* web_contents = GetActiveWebContents();
   if (!web_contents) {
+    LOG(WARNING) << "MessageHandler::GetFrameIndex web_contents is null "
+                 << connection_id;
     return;
   }
 
   const std::string* request_id = dict->FindString("requestId");
   if (!request_id) {
+    LOG(WARNING) << "MessageHandler::GetFrameIndex without requestId "
+                 << connection_id;
     return;
   }
 
   absl::optional<int> frame_id = dict->FindInt("frameId");
   if (!frame_id) {
+    LOG(WARNING) << "MessageHandler::GetFrameIndex without frameId "
+                 << connection_id;
     return;
   }
 
   content::RenderFrameHost* render_frame_host =
       FindRenderFrameHostByID(web_contents, frame_id.value());
   if (!render_frame_host) {
+    LOG(WARNING) << "MessageHandler::GetFrameIndex render_frame_host is null "
+                 << connection_id;
     return;
   }
 
   content::RenderFrameHost* parent_render_frame_host =
       render_frame_host->GetParent();
   if (!parent_render_frame_host) {
+    LOG(WARNING)
+        << "MessageHandler::GetFrameIndex parent_render_frame_host is null "
+        << connection_id;
     return;
   }
-
-  LOG(ERROR) << "GetMainFrame:"
-             << web_contents->GetMainFrame()->GetFrameTreeNodeId();
 
   int frame_index = -1;
   web_contents->GetMainFrame()->ForEachRenderFrameHost(base::BindRepeating(
@@ -315,25 +355,35 @@ void MessageHandler::GetFrameIndex(int connection_id,
 void MessageHandler::GetHtmlValue(int connection_id,
                                   const base::Value::Dict* dict) {
   if (!dict) {
+    LOG(WARNING) << "MessageHandler::GetHtmlValue dict is null "
+                 << connection_id;
     return;
   }
   content::WebContents* web_contents = GetActiveWebContents();
   if (!web_contents) {
+    LOG(WARNING) << "MessageHandler::GetHtmlValue web_contents is null "
+                 << connection_id;
     return;
   }
 
   content::RenderFrameHost* render_frame_host = web_contents->GetMainFrame();
   if (!render_frame_host) {
+    LOG(WARNING) << "MessageHandler::GetHtmlValue render_frame_host is null "
+                 << connection_id;
     return;
   }
 
   const std::string* request_id = dict->FindString("requestId");
   if (!request_id) {
+    LOG(WARNING) << "MessageHandler::GetHtmlValue without requestId "
+                 << connection_id;
     return;
   }
 
   const std::string* element_id = dict->FindString("elementId");
   if (!element_id) {
+    LOG(WARNING) << "MessageHandler::GetHtmlValue without elementId "
+                 << connection_id;
     return;
   }
 
@@ -352,25 +402,36 @@ void MessageHandler::GetHtmlValue(int connection_id,
 void MessageHandler::CaptureHtmlElement(int connection_id,
                                         const base::Value::Dict* dict) {
   if (!dict) {
+    LOG(WARNING) << "MessageHandler::CaptureHtmlElement dict is null "
+                 << connection_id;
     return;
   }
   content::WebContents* web_contents = GetActiveWebContents();
   if (!web_contents) {
+    LOG(WARNING) << "MessageHandler::CaptureHtmlElement web_contents is null "
+                 << connection_id;
     return;
   }
 
   content::RenderFrameHost* render_frame_host = web_contents->GetMainFrame();
   if (!render_frame_host) {
+    LOG(WARNING)
+        << "MessageHandler::CaptureHtmlElement render_frame_host is null "
+        << connection_id;
     return;
   }
 
   const std::string* request_id = dict->FindString("requestId");
   if (!request_id) {
+    LOG(WARNING) << "MessageHandler::CaptureHtmlElement without requestId "
+                 << connection_id;
     return;
   }
 
   const std::string* element_id = dict->FindString("elementId");
   if (!element_id) {
+    LOG(WARNING) << "MessageHandler::CaptureHtmlElement without elementId "
+                 << connection_id;
     return;
   }
 
@@ -399,6 +460,8 @@ void MessageHandler::SendMessage(int connection_id,
                                  const base::Value::Dict* dict) {
   std::string json_string;
   if (!base::JSONWriter::Write(*dict, &json_string)) {
+    LOG(WARNING) << "MessageHandler::SendMessage JSONWriter failed "
+                 << connection_id;
     return;
   }
 
@@ -412,6 +475,8 @@ void MessageHandler::OnGetInnerHtml(int connection_id,
                                     base::Value result) {
   std::string* value = result.GetIfString();
   if (!value) {
+    LOG(WARNING) << "MessageHandler::OnGetInnerHtml result is null "
+                 << connection_id << " " << request_id;
     return;
   }
 
@@ -428,31 +493,43 @@ void MessageHandler::OnGetElementRect(int connection_id,
                                       base::Value result) {
   const base::Value::Dict* dict = result.GetIfDict();
   if (!dict) {
+    LOG(WARNING) << "MessageHandler::OnGetElementRect dict is null "
+                 << connection_id << " " << request_id;
     return;
   }
 
   absl::optional<double> left = dict->FindDouble("left");
   if (!left) {
+    LOG(WARNING) << "MessageHandler::OnGetElementRect left is null "
+                 << connection_id << " " << request_id;
     return;
   }
 
   absl::optional<double> top = dict->FindDouble("top");
   if (!top) {
+    LOG(WARNING) << "MessageHandler::OnGetElementRect top is null "
+                 << connection_id << " " << request_id;
     return;
   }
 
   absl::optional<double> right = dict->FindDouble("right");
   if (!right) {
+    LOG(WARNING) << "MessageHandler::OnGetElementRect right is null "
+                 << connection_id << " " << request_id;
     return;
   }
 
   absl::optional<double> bottom = dict->FindDouble("bottom");
   if (!bottom) {
+    LOG(WARNING) << "MessageHandler::OnGetElementRect bottom is null "
+                 << connection_id << " " << request_id;
     return;
   }
 
   content::WebContents* web_contents = GetActiveWebContents();
   if (!web_contents) {
+    LOG(WARNING) << "MessageHandler::OnGetElementRect web_contents is null "
+                 << connection_id << " " << request_id;
     return;
   }
 
@@ -460,6 +537,9 @@ void MessageHandler::OnGetElementRect(int connection_id,
       (content::RenderFrameHostImpl*)web_contents->GetMainFrame();
   if (!render_frame_host || !render_frame_host->GetRenderWidgetHost() ||
       !render_frame_host->GetRenderWidgetHost()->GetView()) {
+    LOG(WARNING)
+        << "MessageHandler::OnGetElementRect render_frame_host is null "
+        << connection_id << " " << request_id;
     return;
   }
 
@@ -555,6 +635,8 @@ void MessageHandler::ScreenshotCaptured(
     const gfx::Image& image) {
   content::WebContents* web_contents = GetActiveWebContents();
   if (!web_contents) {
+    LOG(WARNING) << "MessageHandler::ScreenshotCaptured web_contents is null "
+                 << connection_id << " " << request_id;
     return;
   }
 
@@ -570,6 +652,8 @@ void MessageHandler::ScreenshotCaptured(
       original_web_prefs.value());
 
   if (image.IsEmpty()) {
+    LOG(WARNING) << "MessageHandler::ScreenshotCaptured image is null "
+                 << connection_id << " " << request_id;
     return;
   }
 
