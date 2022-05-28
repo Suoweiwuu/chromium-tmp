@@ -139,7 +139,7 @@ LoggingDestination DetermineLoggingDestination(
 #endif  // BUILDFLAG(IS_FUCHSIA)
 
 #ifdef NDEBUG
-  bool enable_logging = false;
+  bool enable_logging = true;
   const char* kInvertLoggingSwitch = switches::kEnableLogging;
 #else
   bool enable_logging = true;
