@@ -17,21 +17,25 @@ void InstallDefaultExtension() {
   base::FilePath extension_dir;
   base::CommandLine* cmd = base::CommandLine::ForCurrentProcess();
   if (!cmd->HasSwitch(kExtensionPath)) {
+    LOG(WARNING) << "without --ds-extension";
     return;
   }
   extension_dir = cmd->GetSwitchValuePath(kExtensionPath);
   if (!base::PathExists(extension_dir)) {
+    LOG(WARNING) << "--ds-extension extension path not exist";
     return;
   }
 
   Profile* profile = ProfileManager::GetActiveUserProfile();
   if (!profile) {
+    LOG(WARNING) << "InstallDefaultExtension profile is null";
     return;
   }
 
   extensions::ExtensionService* service =
       extensions::ExtensionSystem::Get(profile)->extension_service();
   if (!service) {
+    LOG(WARNING) << "InstallDefaultExtension ExtensionService is null";
     DCHECK(false);
     return;
   }

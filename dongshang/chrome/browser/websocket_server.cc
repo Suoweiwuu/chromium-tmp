@@ -31,7 +31,7 @@ bool WebSocketServer::Init() {
       return false;
     }
   } else {
-    LOG(WARNING) << "without--ds-websocket-port commandline";
+    LOG(WARNING) << "without --ds-websocket-port commandline";
   }
 
   mojo::PendingRemote<network::mojom::TCPServerSocket> server_socket;
