@@ -437,6 +437,7 @@ void MessageHandler::CaptureHtmlElement(int connection_id,
 
   std::u16string javascript(
       base::StringPrintf(uR"(
+{
 let rect = document.getElementById("%ls").getBoundingClientRect();
 let r = {
 "left":rect.left,
@@ -445,6 +446,8 @@ let r = {
 "bottom":rect.bottom
 };
 r;
+}
+
 )",
                          base::ASCIIToUTF16(*element_id).c_str()));
 
