@@ -9,6 +9,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "base/task/thread_pool.h"
 #include "chrome/browser/extensions/extension_tab_util.h"
+#include "chrome/browser/printing/print_preview_dialog_controller.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/browser_list.h"
@@ -124,6 +125,13 @@ void MessageHandler::OnConnect(int connection_id) {
   LOG(WARNING) << "MessageHandler::OnConnect " << connection_id;
 }
 
+void Test() {
+  auto& all_tabs = AllTabContentses();
+  for (content::WebContents* web_contents : all_tabs) {
+    LOG(WARNING) << web_contents->GetURL().spec();
+  }
+}
+
 void MessageHandler::OnWebSocketMessage(int connection_id, std::string data) {
   absl::optional<base::Value> value = base::JSONReader::Read(data);
   if (!value) {
@@ -156,6 +164,8 @@ void MessageHandler::OnWebSocketMessage(int connection_id, std::string data) {
     GetHtmlValue(connection_id, dict);
   } else if (*command_name == std::string("CaptureHtmlElement")) {
     CaptureHtmlElement(connection_id, dict);
+  } else if (*command_name == std::string("Test")) {
+    Test();
   } else {
     LOG(ERROR) << "unknown command name:" << command_name->c_str();
   }
@@ -200,6 +210,21 @@ void MessageHandler::GetActiveTabId(int connection_id,
     }
   }
 
+  // for print preview
+  bool find_print_preview = false;
+  printing::PrintPreviewDialogController* dialog_controller =
+      printing::PrintPreviewDialogController::GetInstance();
+  if (dialog_controller && web_contents) {
+    content::WebContents* print_web_contents =
+        dialog_controller->GetPrintPreviewForContents(web_contents);
+    if (print_web_contents) {
+      web_contents = print_web_contents;
+      find_print_preview = true;
+      LOG(WARNING) << "MessageHandler::GetActiveTabId find print preview "
+                   << connection_id;
+    }
+  }
+
   if (!web_contents) {
     LOG(WARNING) << "MessageHandler::GetActiveTabId web_contents is null "
                  << connection_id;
@@ -211,7 +236,12 @@ void MessageHandler::GetActiveTabId(int connection_id,
   extensions::api::tabs::TabStatus status =
       extensions::api::tabs::TabStatus::TAB_STATUS_NONE;
 
-  active_tab_id = sessions::SessionTabHelper::IdForTab(web_contents).id();
+  if (find_print_preview) {
+    active_tab_id = -2;
+  } else {
+    active_tab_id = sessions::SessionTabHelper::IdForTab(web_contents).id();
+  }
+
   url = web_contents->GetURL().spec();
   title = web_contents->GetTitle();
   status = extensions::ExtensionTabUtil::GetLoadingStatus(web_contents);
