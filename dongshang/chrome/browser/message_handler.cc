@@ -318,6 +318,19 @@ void MessageHandler::GetFrameIndex(int connection_id,
     return;
   }
 
+  // for print preview
+  printing::PrintPreviewDialogController* dialog_controller =
+      printing::PrintPreviewDialogController::GetInstance();
+  if (dialog_controller && web_contents) {
+    content::WebContents* print_web_contents =
+        dialog_controller->GetPrintPreviewForContents(web_contents);
+    if (print_web_contents) {
+      web_contents = print_web_contents;
+      LOG(WARNING) << "MessageHandler::GetActiveTabId find print preview "
+                   << connection_id;
+    }
+  }
+
   const std::string* request_id = dict->FindString("requestId");
   if (!request_id) {
     LOG(WARNING) << "MessageHandler::GetFrameIndex without requestId "
@@ -396,6 +409,19 @@ void MessageHandler::GetHtmlValue(int connection_id,
     return;
   }
 
+  // for print preview
+  printing::PrintPreviewDialogController* dialog_controller =
+      printing::PrintPreviewDialogController::GetInstance();
+  if (dialog_controller && web_contents) {
+    content::WebContents* print_web_contents =
+        dialog_controller->GetPrintPreviewForContents(web_contents);
+    if (print_web_contents) {
+      web_contents = print_web_contents;
+      LOG(WARNING) << "MessageHandler::GetActiveTabId find print preview "
+                   << connection_id;
+    }
+  }
+
   content::RenderFrameHost* render_frame_host = web_contents->GetMainFrame();
   if (!render_frame_host) {
     LOG(WARNING) << "MessageHandler::GetHtmlValue render_frame_host is null "
@@ -441,6 +467,19 @@ void MessageHandler::CaptureHtmlElement(int connection_id,
     LOG(WARNING) << "MessageHandler::CaptureHtmlElement web_contents is null "
                  << connection_id;
     return;
+  }
+
+  // for print preview
+  printing::PrintPreviewDialogController* dialog_controller =
+      printing::PrintPreviewDialogController::GetInstance();
+  if (dialog_controller && web_contents) {
+    content::WebContents* print_web_contents =
+        dialog_controller->GetPrintPreviewForContents(web_contents);
+    if (print_web_contents) {
+      web_contents = print_web_contents;
+      LOG(WARNING) << "MessageHandler::GetActiveTabId find print preview "
+                   << connection_id;
+    }
   }
 
   content::RenderFrameHost* render_frame_host = web_contents->GetMainFrame();
@@ -566,6 +605,19 @@ void MessageHandler::OnGetElementRect(int connection_id,
     return;
   }
 
+  // for print preview
+  printing::PrintPreviewDialogController* dialog_controller =
+      printing::PrintPreviewDialogController::GetInstance();
+  if (dialog_controller && web_contents) {
+    content::WebContents* print_web_contents =
+        dialog_controller->GetPrintPreviewForContents(web_contents);
+    if (print_web_contents) {
+      web_contents = print_web_contents;
+      LOG(WARNING) << "MessageHandler::GetActiveTabId find print preview "
+                   << connection_id;
+    }
+  }
+
   content::RenderFrameHostImpl* render_frame_host =
       (content::RenderFrameHostImpl*)web_contents->GetMainFrame();
   if (!render_frame_host || !render_frame_host->GetRenderWidgetHost() ||
@@ -671,6 +723,19 @@ void MessageHandler::ScreenshotCaptured(
     LOG(WARNING) << "MessageHandler::ScreenshotCaptured web_contents is null "
                  << connection_id << " " << request_id;
     return;
+  }
+
+  // for print preview
+  printing::PrintPreviewDialogController* dialog_controller =
+      printing::PrintPreviewDialogController::GetInstance();
+  if (dialog_controller && web_contents) {
+    content::WebContents* print_web_contents =
+        dialog_controller->GetPrintPreviewForContents(web_contents);
+    if (print_web_contents) {
+      web_contents = print_web_contents;
+      LOG(WARNING) << "MessageHandler::GetActiveTabId find print preview "
+                   << connection_id;
+    }
   }
 
   content::RenderFrameHostImpl* render_frame_host =
