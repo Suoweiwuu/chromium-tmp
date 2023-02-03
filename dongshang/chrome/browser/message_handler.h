@@ -33,6 +33,7 @@ class MessageHandler : WebSocketServerDelegate {
   void GetFrameIndex(int connection_id, const base::Value::Dict* dict);
   void GetHtmlValue(int connection_id, const base::Value::Dict* dict);
   void CaptureHtmlElement(int connection_id, const base::Value::Dict* dict);
+  void CloseTab(int connection_id, const base::Value::Dict* dict);
 
   void SendMessage(int connection_id, const base::Value::Dict* dict);
   void OnGetInnerHtml(int connection_id,

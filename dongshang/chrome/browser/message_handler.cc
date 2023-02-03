@@ -164,6 +164,8 @@ void MessageHandler::OnWebSocketMessage(int connection_id, std::string data) {
     GetHtmlValue(connection_id, dict);
   } else if (*command_name == std::string("CaptureHtmlElement")) {
     CaptureHtmlElement(connection_id, dict);
+  } else if (*command_name == std::string("CloseTab")) {
+    CloseTab(connection_id, dict);
   } else if (*command_name == std::string("Test")) {
     Test();
   } else {
@@ -526,6 +528,54 @@ r;
       javascript,
       base::BindOnce(&MessageHandler::OnGetElementRect,
                      weak_factory_.GetWeakPtr(), connection_id, *request_id));
+}
+
+void MessageHandler::CloseTab(int connection_id,
+                              const base::Value::Dict* dict) {
+  if (!dict) {
+    LOG(WARNING) << "MessageHandler::CloseTab dict is null " << connection_id;
+    return;
+  }
+
+  const std::string* request_id = dict->FindString("requestId");
+  if (!request_id) {
+    LOG(WARNING) << "MessageHandler::CloseTab without requestId "
+                 << connection_id;
+    return;
+  }
+
+  absl::optional<int> window_id = dict->FindInt("windowId");
+  if (!window_id) {
+    LOG(WARNING) << "MessageHandler::CloseTab without windowId "
+                 << connection_id;
+    return;
+  }
+
+  absl::optional<int> tab_id = dict->FindInt("tabId");
+  if (!tab_id) {
+    LOG(WARNING) << "MessageHandler::CloseTab without tabId " << connection_id;
+    return;
+  }
+
+  auto& all_tabs = AllTabContentses();
+  auto tab_id_matches = [tab_id](content::WebContents* web_contents) {
+    return sessions::SessionTabHelper::IdForTab(web_contents).id() ==
+           tab_id.value();
+  };
+  auto it = std::find_if(all_tabs.begin(), all_tabs.end(), tab_id_matches);
+  if (it == all_tabs.end()) {
+    LOG(WARNING) << "MessageHandler::CloseTab not find tabs "
+                 << connection_id;
+    return;
+  }
+
+  it->Close();
+
+  base::Value::Dict respond_info;
+  respond_info.Set("returnId", *request_id);
+  respond_info.Set("retCode", true);
+
+  SendMessage(connection_id, &respond_info);
 }
 
 void MessageHandler::SendMessage(int connection_id,
