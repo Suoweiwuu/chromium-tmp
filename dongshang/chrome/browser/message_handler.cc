@@ -10,6 +10,7 @@
 #include "base/task/thread_pool.h"
 #include "chrome/browser/extensions/extension_tab_util.h"
 #include "chrome/browser/printing/print_preview_dialog_controller.h"
+#include "chrome/browser/profiles/profile_manager.h"
 #include "chrome/browser/ui/browser.h"
 #include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/browser_list.h"
@@ -24,6 +25,8 @@
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/render_view_host.h"
 #include "dongshang/chrome/browser/websocket_server.h"
+#include "net/cookies/cookie_util.h"
+#include "services/network/public/mojom/network_context.mojom.h"
 #include "third_party/blink/public/common/widget/device_emulation_params.h"
 #include "ui/gfx/skbitmap_operations.h"
 
@@ -166,6 +169,8 @@ void MessageHandler::OnWebSocketMessage(int connection_id, std::string data) {
     CaptureHtmlElement(connection_id, dict);
   } else if (*command_name == std::string("CloseTab")) {
     CloseTab(connection_id, dict);
+  } else if (*command_name == std::string("CookieOperator")) {
+    CookieOperator(connection_id, dict);
   } else if (*command_name == std::string("Test")) {
     Test();
   } else {
@@ -533,27 +538,25 @@ r;
 void MessageHandler::CloseTab(int connection_id,
                               const base::Value::Dict* dict) {
   if (!dict) {
-    LOG(WARNING) << "MessageHandler::CloseTab dict is null " << connection_id;
+    SendErrorMessage(connection_id, "", "CloseTab dict is null");
     return;
   }
 
   const std::string* request_id = dict->FindString("requestId");
   if (!request_id) {
-    LOG(WARNING) << "MessageHandler::CloseTab without requestId "
-                 << connection_id;
+    SendErrorMessage(connection_id, "", "CloseTab missing requestId");
     return;
   }
 
   absl::optional<int> window_id = dict->FindInt("windowId");
   if (!window_id) {
-    LOG(WARNING) << "MessageHandler::CloseTab without windowId "
-                 << connection_id;
+    SendErrorMessage(connection_id, *request_id, "CloseTab missing windowId");
     return;
   }
 
   absl::optional<int> tab_id = dict->FindInt("tabId");
   if (!tab_id) {
-    LOG(WARNING) << "MessageHandler::CloseTab without tabId " << connection_id;
+    SendErrorMessage(connection_id, *request_id, "CloseTab missing tabId");
     return;
   }
 
@@ -564,8 +567,7 @@ void MessageHandler::CloseTab(int connection_id,
   };
   auto it = std::find_if(all_tabs.begin(), all_tabs.end(), tab_id_matches);
   if (it == all_tabs.end()) {
-    LOG(WARNING) << "MessageHandler::CloseTab not find tabs "
-                 << connection_id;
+    SendErrorMessage(connection_id, *request_id, "CloseTab not find tab");
     return;
   }
 
@@ -574,6 +576,235 @@ void MessageHandler::CloseTab(int connection_id,
   base::Value::Dict respond_info;
   respond_info.Set("returnId", *request_id);
   respond_info.Set("retCode", true);
+
+  SendMessage(connection_id, &respond_info);
+}
+
+void MessageHandler::CookieOperator(int connection_id,
+                                    const base::Value::Dict* dict) {
+  if (!dict) {
+    SendErrorMessage(connection_id, "", "CookieOperator dict is null");
+    return;
+  }
+
+  const std::string* request_id = dict->FindString("requestId");
+  if (!request_id) {
+    SendErrorMessage(connection_id, "", "CookieOperator missing requestId");
+    return;
+  }
+
+  absl::optional<int> window_id = dict->FindInt("windowId");
+  if (!window_id) {
+    SendErrorMessage(connection_id, *request_id,
+                     "CookieOperator missing windowId");
+    return;
+  }
+
+  absl::optional<int> tab_id = dict->FindInt("tabId");
+  if (!tab_id) {
+    SendErrorMessage(connection_id, *request_id,
+                     "CookieOperator missing tabId");
+    return;
+  }
+
+  const std::string* cmd = dict->FindString("cmd");
+  if (!cmd) {
+    SendErrorMessage(connection_id, *request_id, "CookieOperator missing cmd");
+    return;
+  }
+
+  Profile* profile = ProfileManager::GetLastUsedProfile();
+  if (!profile) {
+    SendErrorMessage(connection_id, *request_id,
+                     "CookieOperator profile is null");
+    return;
+  }
+
+  content::StoragePartition* partition = profile->GetDefaultStoragePartition();
+  if (!partition) {
+    SendErrorMessage(connection_id, *request_id,
+                     "CookieOperator partition is null");
+    return;
+  }
+
+  network::mojom::CookieManager* cookie_manager =
+      partition->GetCookieManagerForBrowserProcess();
+  if (!cookie_manager) {
+    SendErrorMessage(connection_id, *request_id,
+                     "CookieOperator cookie_manager is null");
+    return;
+  }
+
+  GURL cookie_url;
+  const std::string* url = dict->FindString("url");
+  if (url) {
+    if (GURL(*url).is_valid()) {
+      cookie_url = GURL(*url);
+    } else {
+      LOG(WARNING) << "MessageHandler::CookieOperator url is invalid"
+                   << connection_id;
+    }
+  } else {
+    auto& all_tabs = AllTabContentses();
+    auto tab_id_matches = [tab_id](content::WebContents* web_contents) {
+      return sessions::SessionTabHelper::IdForTab(web_contents).id() ==
+             tab_id.value();
+    };
+    auto it = std::find_if(all_tabs.begin(), all_tabs.end(), tab_id_matches);
+    if (it == all_tabs.end()) {
+      SendErrorMessage(connection_id, *request_id,
+                       "CookieOperator not find tab");
+      return;
+    }
+
+    cookie_url = it->GetVisibleURL();
+  }
+
+  if (!cookie_url.is_valid()) {
+    SendErrorMessage(connection_id, *request_id,
+                     "CookieOperator url is invalid");
+    return;
+  }
+
+  if (*cmd == std::string("GetAll")) {
+    cookie_manager->GetCookieList(
+        cookie_url, net::CookieOptions::MakeAllInclusive(),
+        net::CookiePartitionKeyCollection::Todo(),
+        base::BindOnce(&MessageHandler::OnGetAll, weak_factory_.GetWeakPtr(),
+                       connection_id, *request_id));
+    return;
+  } else if (*cmd == std::string("DeleteAll")) {
+    network::mojom::CookieDeletionFilterPtr filter(
+        network::mojom::CookieDeletionFilter::New());
+    filter->url = cookie_url;
+    cookie_manager->DeleteCookies(
+        std::move(filter),
+        base::BindOnce(&MessageHandler::OnDeleteCookies,
+                       weak_factory_.GetWeakPtr(), connection_id, *request_id));
+    return;
+  } else if (*cmd == std::string("DeleteOne")) {
+    const std::string* name = dict->FindString("name");
+    if (!name) {
+      LOG(WARNING) << "MessageHandler::CookieOperator without name "
+                   << connection_id;
+      SendErrorMessage(connection_id, *request_id,
+                       "CookieOperator DeleteOne missing name");
+      return;
+    }
+    network::mojom::CookieDeletionFilterPtr filter(
+        network::mojom::CookieDeletionFilter::New());
+    filter->url = cookie_url;
+    filter->cookie_name = *name;
+    cookie_manager->DeleteCookies(
+        std::move(filter),
+        base::BindOnce(&MessageHandler::OnDeleteCookies,
+                       weak_factory_.GetWeakPtr(), connection_id, *request_id));
+    return;
+  } else if (*cmd == std::string("AddOrUpdateOne")) {
+    const std::string* name = dict->FindString("name");
+    if (!name) {
+      SendErrorMessage(connection_id, *request_id,
+                       "CookieOperator AddOrUpdateOne missing name");
+      return;
+    }
+
+    const std::string* value = dict->FindString("value");
+    if (!value) {
+      SendErrorMessage(connection_id, *request_id,
+                       "CookieOperator AddOrUpdateOne missing value");
+      return;
+    }
+    std::string cookie_domain;
+    net::cookie_util::GetCookieDomainWithString(cookie_url, cookie_url.host(),
+                                                &cookie_domain);
+    std::unique_ptr<net::CanonicalCookie> cookie =
+        ::net::CanonicalCookie::CreateSanitizedCookie(
+            cookie_url, *name, *value, cookie_domain, cookie_url.path(),
+            base::Time::Now(), base::Time::Now() + base::Days(365),
+            base::Time::Now(), false, false, net::CookieSameSite::UNSPECIFIED,
+            net::CookiePriority::COOKIE_PRIORITY_MEDIUM, false,
+            absl::optional<net::CookiePartitionKey>());
+
+    cookie_manager->SetCanonicalCookie(
+        *cookie, cookie_url, net::CookieOptions::MakeAllInclusive(),
+        base::BindOnce(&MessageHandler::OnSetCanonicalCookie,
+                       weak_factory_.GetWeakPtr(), connection_id, *request_id));
+    return;
+  }
+
+  base::Value::Dict respond_info;
+  respond_info.Set("returnId", *request_id);
+  respond_info.Set("retCode", false);
+  base::Value::List cookie_list;
+  respond_info.Set("cookieList", std::move(cookie_list));
+
+  SendMessage(connection_id, &respond_info);
+}
+
+void MessageHandler::OnGetAll(
+    int connection_id,
+    const std::string& request_id,
+    const std::vector<::net::CookieWithAccessResult>& cookies,
+    const std::vector<::net::CookieWithAccessResult>& excluded_cookies) {
+  base::Value::Dict respond_info;
+  respond_info.Set("returnId", request_id);
+  respond_info.Set("retCode", true);
+  base::Value::List cookie_list;
+  for (auto c : cookies) {
+    base::Value::Dict cv;
+    cv.Set("name", c.cookie.Name());
+    cv.Set("value", c.cookie.Value());
+    cv.Set("domain", c.cookie.Domain());
+    cv.Set("path", c.cookie.Path());
+    cv.Set("creation_time",
+           base::StringPrintf("%I64d", c.cookie.CreationDate().ToJavaTime()));
+    cv.Set("expiration_time",
+           base::StringPrintf("%I64d", c.cookie.ExpiryDate().ToJavaTime()));
+    cv.Set("secure", c.cookie.IsSecure());
+    cv.Set("http_only", c.cookie.IsHttpOnly());
+    cookie_list.Append(std::move(cv));
+  }
+
+  for (auto c : excluded_cookies) {
+    base::Value::Dict cv;
+    cv.Set("name", c.cookie.Name());
+    cv.Set("value", c.cookie.Value());
+    cv.Set("domain", c.cookie.Domain());
+    cv.Set("path", c.cookie.Path());
+    cv.Set("creation_time",
+           base::StringPrintf("%I64d", c.cookie.CreationDate().ToJavaTime()));
+    cv.Set("expiration_time",
+           base::StringPrintf("%I64d", c.cookie.ExpiryDate().ToJavaTime()));
+    cv.Set("secure", c.cookie.IsSecure());
+    cv.Set("http_only", c.cookie.IsHttpOnly());
+    cookie_list.Append(std::move(cv));
+  }
+  respond_info.Set("cookieList", std::move(cookie_list));
+
+  SendMessage(connection_id, &respond_info);
+}
+
+void MessageHandler::OnDeleteCookies(int connection_id,
+                                     const std::string& request_id,
+                                     uint32_t num_deleted) {
+  base::Value::Dict respond_info;
+  respond_info.Set("returnId", request_id);
+  respond_info.Set("retCode", true);
+  respond_info.Set("num_deleted", (int)num_deleted);
+  base::Value::List cookie_list;
+  respond_info.Set("cookieList", std::move(cookie_list));
+
+  SendMessage(connection_id, &respond_info);
+}
+
+void MessageHandler::OnSetCanonicalCookie(int connection_id,
+                                          const std::string& request_id,
+                                          net::CookieAccessResult result) {
+  base::Value::Dict respond_info;
+  respond_info.Set("returnId", request_id);
+  respond_info.Set("retCode", true);
+  base::Value::List cookie_list;
+  respond_info.Set("cookieList", std::move(cookie_list));
 
   SendMessage(connection_id, &respond_info);
 }
@@ -590,6 +821,17 @@ void MessageHandler::SendMessage(int connection_id,
   if (websocket_server_) {
     websocket_server_->SendOverWebSocket(connection_id, json_string);
   }
+}
+
+void MessageHandler::SendErrorMessage(int connection_id,
+                                      const std::string& request_id,
+                                      const std::string& error) {
+  base::Value::Dict respond_info;
+  respond_info.Set("returnId", request_id);
+  respond_info.Set("retCode", false);
+  respond_info.Set("error", error);
+
+  SendMessage(connection_id, &respond_info);
 }
 
 void MessageHandler::OnGetInnerHtml(int connection_id,

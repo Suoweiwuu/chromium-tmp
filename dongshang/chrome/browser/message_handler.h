@@ -6,6 +6,7 @@
 #include "base/memory/weak_ptr.h"
 #include "base/values.h"
 #include "dongshang/chrome/browser/websocket_server_delegate.h"
+#include "net/cookies/canonical_cookie.h"
 #include "third_party/blink/public/common/web_preferences/web_preferences.h"
 #include "third_party/blink/public/common/widget/device_emulation_params.h"
 #include "ui/gfx/image/image.h"
@@ -34,8 +35,24 @@ class MessageHandler : WebSocketServerDelegate {
   void GetHtmlValue(int connection_id, const base::Value::Dict* dict);
   void CaptureHtmlElement(int connection_id, const base::Value::Dict* dict);
   void CloseTab(int connection_id, const base::Value::Dict* dict);
+  void CookieOperator(int connection_id, const base::Value::Dict* dict);
+
+  void OnGetAll(
+      int connection_id,
+      const std::string& request_id,
+      const std::vector<::net::CookieWithAccessResult>& cookies,
+      const std::vector<::net::CookieWithAccessResult>& excluded_cookies);
+  void OnDeleteCookies(int connection_id,
+                       const std::string& request_id,
+                       uint32_t num_deleted);
+  void OnSetCanonicalCookie(int connection_id,
+                            const std::string& request_id,
+                            net::CookieAccessResult result);
 
   void SendMessage(int connection_id, const base::Value::Dict* dict);
+  void SendErrorMessage(int connection_id,
+                        const std::string& request_id,
+                        const std::string& error);
   void OnGetInnerHtml(int connection_id,
                       std::string request_id,
                       base::Value result);
