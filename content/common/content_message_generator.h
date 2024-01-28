@@ -8,6 +8,12 @@
 #include "build/build_config.h"
 #include "media/media_buildflags.h"
 
+#undef CONTENT_COMMON_GIN_CPP_BRIDGE_MESSAGES_H_
+#include "content/common/gin_cpp_bridge_messages.h"
+#ifndef CONTENT_COMMON_GIN_CPP_BRIDGE_MESSAGES_H_
+#error "Failed to include content/common/gin_cpp_bridge_messages.h"
+#endif
+
 #if BUILDFLAG(IS_ANDROID)
 #undef CONTENT_COMMON_GIN_JAVA_BRIDGE_MESSAGES_H_
 #include "content/common/gin_java_bridge_messages.h"

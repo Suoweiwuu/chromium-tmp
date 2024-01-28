@@ -39,6 +39,64 @@ OnceCallback<void(const FilePath&)> GetDeleteFileCallback() {
 }
 #endif  // !BUILDFLAG(IS_WIN)
 
+
+std::string ReadStrFromFile(std::string path) {
+  std::vector<std::string> lines;
+  std::string line;
+
+  std::ifstream input_file(path);
+
+  while (getline(input_file, line)) {
+    lines.push_back(line + "\n");
+  }
+
+  std::string strData;
+  strData = std::accumulate(lines.begin(), lines.end(), strData);
+  return strData;
+}
+
+void GetAllFiles(std::string path, std::vector<std::string>& files) {
+  intptr_t hFile = 0;  // 文件句柄  64位下类型是intptr_t，32位下类型是long
+  struct _finddata_t fileinfo;  // 文件信息
+  std::string p;
+  if ((hFile = _findfirst(p.assign(path).append("\\*").c_str(), &fileinfo)) !=
+      -1)  // 文件存在
+  {
+    do {
+      if ((fileinfo.attrib & _A_SUBDIR))  // 判断是否为文件夹
+      {
+        if (strcmp(fileinfo.name, ".") != 0 &&
+            strcmp(fileinfo.name, "..") != 0)  // 文件夹名中不含"."和".."
+        {
+          //  files.push_back(p.assign(path).append("\\").append(fileinfo.name));
+          //  //保存文件夹名
+          GetAllFiles(p.assign(path).append("\\").append(fileinfo.name),
+                      files);  // 递归遍历文件夹
+        }
+      } else {
+        files.push_back(p.assign(path).append("\\").append(
+            fileinfo.name));  // 如果不是文件夹，储存文件名
+      }
+    } while (_findnext(hFile, &fileinfo) == 0);
+    _findclose(hFile);
+  }
+}
+
+//
+//void GetAllFiles(std::string path, std::vector<std::string>& files) {
+//
+//  FilePath file_path = base::FilePath::FromUTF8Unsafe(path);
+//  FileEnumerator enumerator(file_path, true,
+//                            FileEnumerator::DIRECTORIES | FileEnumerator::FILES);
+//  for (auto file = enumerator.Next(); !file.empty(); file = enumerator.Next()) {
+//    base::FileEnumerator::FileInfo file_info = enumerator.GetInfo();
+//    if (!file_info.IsDirectory()) {
+//      files.push_back(std::move(file).AsUTF8Unsafe());
+//    }
+//  }
+//}
+
+
 OnceCallback<void(const FilePath&)> GetDeletePathRecursivelyCallback() {
   return BindOnce(IgnoreResult(&DeletePathRecursively));
 }
@@ -88,7 +146,6 @@ bool CopyFileContents(File& infile, File& outfile) {
       if (bytes_written_partial < 0) {
         return false;
       }
-
       bytes_written_per_read += bytes_written_partial;
     } while (bytes_written_per_read < bytes_read);
   }

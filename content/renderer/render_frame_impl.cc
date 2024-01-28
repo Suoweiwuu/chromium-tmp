@@ -21,6 +21,7 @@
 #include "base/debug/dump_without_crashing.h"
 #include "base/feature_list.h"
 #include "base/files/file.h"
+#include "base/files/file_util.h"
 #include "base/guid.h"
 #include "base/json/json_reader.h"
 #include "base/json/json_writer.h"
@@ -234,6 +235,12 @@
 #include "v8/include/v8-local-handle.h"
 #include "v8/include/v8-microtask-queue.h"
 
+#include "v8/include/v8.h"
+#include "gin/function_template.h"
+#include "content/public/renderer/chrome_object_extensions_utils.h"
+#include "content/common/gin_cpp_bridge_messages.h"
+
+
 #if BUILDFLAG(ENABLE_PLUGINS)
 #include "content/renderer/pepper/pepper_browser_connection.h"
 #include "content/renderer/pepper/pepper_plugin_instance_impl.h"
@@ -299,6 +306,7 @@ namespace {
 
 const int kExtraCharsBeforeAndAfterSelection = 100;
 const size_t kMaxURLLogChars = 1024;
+
 
 // Time, in seconds, we delay before sending content state changes (such as form
 // state and scroll position) to the browser. We delay sending changes to avoid
@@ -1346,6 +1354,10 @@ class RenderFrameImpl::MHTMLBodyLoaderClient
       done_callback_;
 };
 
+
+//std::shared_ptr<std::string> RenderFrameImpl::js_code_;
+
+
 class RenderFrameImpl::FrameURLLoaderFactory
     : public blink::WebURLLoaderFactory {
  public:
@@ -2097,23 +2109,79 @@ bool RenderFrameImpl::Send(IPC::Message* message) {
   return agent_scheduling_group_.Send(message);
 }
 
+
+void RenderFrameImpl::OnBrowserMessage(v8::Local<v8::Value> message) {
+
+  std::string sending_message(
+      *v8::String::Utf8Value(blink::MainThreadIsolate(), message));
+
+  Send(new GinCppBridgeHostMsg_CallbackResult(GetRoutingID(), sending_message));
+
+  LOG(INFO) << "callback success";
+}
+
+v8::Local<v8::Object> EnsureObjectExists(v8::Isolate* isolate,
+                                         v8::Local<v8::Object> parent,
+                                         const std::string& key) {
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
+  v8::MaybeLocal<v8::Value> child =
+      parent->Get(context, gin::StringToV8(isolate, key));
+  v8::Local<v8::Value> child_local;
+  v8::Local<v8::Object> child_object;
+  if (child.ToLocal(&child_local) && child_local->IsObject() &&
+      child_local->ToObject(context).ToLocal(&child_object))
+    return child_object;
+
+  if (!child_local.IsEmpty() && !child_local->IsUndefined())
+    LOG(WARNING) << "Overwriting non-empty non-object with key " << key;
+
+  v8::Local<v8::Object> new_child_object = v8::Object::New(isolate);
+  v8::Maybe<bool> result =
+      parent->Set(context, gin::StringToSymbol(isolate, key), new_child_object);
+  if (result.IsNothing() || !result.FromJust())
+    LOG(ERROR) << "Failed to set new object with key " << key;
+
+  return new_child_object;
+}
+
+//template <typename Functor, typename... Args>
+//v8::Local<v8::Function> InstallBinding(v8::Isolate* isolate,
+//                                       v8::Local<v8::Object> parent_object,
+//                                       std::string method_name,
+//                                       Functor method,
+//                                       Args&&... args) {
+//  v8::Local<v8::FunctionTemplate> temp(gin::CreateFunctionTemplate(
+//      isolate, base::BindRepeating(method, std::forward<Args>(args)...)));
+//  v8::Local<v8::Function> func =
+//      temp->GetFunction(isolate->GetCurrentContext()).ToLocalChecked();
+//  v8::Maybe<bool> result = parent_object->Set(
+//      isolate->GetCurrentContext(),
+//      gin::StringToSymbol(isolate, std::move(method_name)), func);
+//  if (result.IsNothing() || !result.FromJust())
+//    LOG(ERROR) << "Failed to install binging for method " << method_name;
+//
+//  return func;
+//}
+
 bool RenderFrameImpl::OnMessageReceived(const IPC::Message& msg) {
   // We may get here while detaching, when the WebFrame has been deleted.  Do
   // not process any messages in this state.
+    __debugbreak();
   if (!frame_)
     return false;
-
+  
   DCHECK(!frame_->GetDocument().IsNull());
 
   GetContentClient()->SetActiveURL(
       frame_->GetDocument().Url(),
       frame_->Top()->GetSecurityOrigin().ToString().Utf8());
 
-  for (auto& observer : observers_) {
-    if (observer.OnMessageReceived(msg))
-      return true;
-  }
 
+  for (auto& observer : observers_) {
+    if (observer.OnMessageReceived(msg)) {
+      return true;
+    }
+  }
   return false;
 }
 
@@ -4010,6 +4078,35 @@ void RenderFrameImpl::DidHandleOnloadEvents() {
     observer.DidHandleOnloadEvents();
 }
 
+// void GetAllFiles(std::string path, std::vector<std::string>& files) {
+//  intptr_t hFile = 0;  // 文件句柄  64位下类型是intptr_t，32位下类型是long
+//  struct _finddata_t fileinfo;  // 文件信息
+//  std::string p;
+//  if ((hFile = _findfirst(p.assign(path).append("\\*").c_str(), &fileinfo)) !=
+//      -1)  // 文件存在
+//  {
+//    do {
+//      if ((fileinfo.attrib & _A_SUBDIR))  // 判断是否为文件夹
+//      {
+//        if (strcmp(fileinfo.name, ".") != 0 &&
+//            strcmp(fileinfo.name, "..") != 0)  // 文件夹名中不含"."和".."
+//        {
+//          //
+//          files.push_back(p.assign(path).append("\\").append(fileinfo.name));
+//          //  //保存文件夹名
+//          GetAllFiles(p.assign(path).append("\\").append(fileinfo.name),
+//                      files);  // 递归遍历文件夹
+//        }
+//      } else {
+//        files.push_back(p.assign(path).append("\\").append(
+//            fileinfo.name));  // 如果不是文件夹，储存文件名
+//      }
+//    } while (_findnext(hFile, &fileinfo) == 0);
+//    _findclose(hFile);
+//  }
+//}
+
+
 void RenderFrameImpl::DidFinishLoad() {
   TRACE_EVENT1("navigation,benchmark,rail", "RenderFrameImpl::didFinishLoad",
                "id", routing_id_);
@@ -4018,6 +4115,43 @@ void RenderFrameImpl::DidFinishLoad() {
                          TRACE_EVENT_SCOPE_PROCESS);
   }
 
+
+  if (GetLoadingUrl().SchemeIsHTTPOrHTTPS()) {
+
+    v8::Isolate* isolate = blink::MainThreadIsolate();
+    if (!isolate)
+      return;
+
+    v8::MicrotasksScope microtasks(isolate,
+                                   v8::MicrotasksScope::kDoNotRunMicrotasks);
+
+    v8::HandleScope handle_scope(isolate);
+    v8::Local<v8::Context> context = GetWebFrame()->MainWorldScriptContext();
+    if (context.IsEmpty())
+      return;
+
+    v8::Context::Scope context_scope(context);
+    auto container = EnsureObjectExists(isolate, context->Global(), "window");
+
+    //InstallBinding(isolate, container, "postMessage",
+    //               &RenderFrameImpl::Test,
+    //               base::Unretained(this));
+
+    v8::Local<v8::FunctionTemplate> temp(gin::CreateFunctionTemplate(
+        isolate, base::BindRepeating(&RenderFrameImpl::OnBrowserMessage, base::Unretained(this))));
+    v8::Local<v8::Function> func =
+        temp->GetFunction(isolate->GetCurrentContext()).ToLocalChecked();
+    v8::Maybe<bool> result = container->Set(
+        isolate->GetCurrentContext(),
+        gin::StringToSymbol(isolate, std::move("report")), func);
+    if (result.IsNothing() || !result.FromJust())
+      LOG(ERROR) << "Failed to install binging for method [postMessage]";
+
+
+    LOG(INFO) << "success";
+  }
+
+ 
   for (auto& observer : observers_)
     observer.DidFinishLoad();
 

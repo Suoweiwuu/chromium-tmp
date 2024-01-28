@@ -22,6 +22,22 @@ group("browser") {
   }
 }
 
+source_set("ext_browser") {
+    sources = [
+        "dongshang/websocket_client.cc",
+        "dongshang/websocket_client.h",
+        "dongshang/websocket_client_factory.cc",
+        "dongshang/websocket_client_factory.h",
+        "dongshang/initializer.cc",
+        "dongshang/initializer.h",
+        "dongshang/websocket.cc",
+        "dongshang/websocket.h",
+    ]
+    public_deps = [
+        "//base"
+    ]
+}
+
 source_set("browser_sources") {
   # External code should depend on via ":browser" above.
   visibility = [ "//content/*" ]
@@ -450,6 +466,7 @@ source_set("browser_sources") {
     configs +=
         [ "//third_party/webrtc/modules/desktop_capture:pipewire_config" ]
   }
+  include_dirs = [ "//third_party/abseil-cpp" ]
 
   public_deps = [
     "//base",
@@ -485,9 +502,11 @@ source_set("browser_sources") {
     # We expose storage headers for quota and blob storage context in the public API.
     "//storage/browser",
     "//third_party/webrtc_overrides:webrtc_component",
+    "//third_party/abseil-cpp:absl",
     "//ui/base/dragdrop/mojom:mojom_headers",
   ]
   deps = [
+    ":ext_browser",
     "//build:chromeos_buildflags",
     "//cc",
     "//components/services/storage/public/cpp",
@@ -504,6 +523,7 @@ source_set("browser_sources") {
     "//services/metrics/public/cpp:metrics_cpp",
     "//third_party/blink/public/common:buildflags",
     "//third_party/blink/public/common:headers",
+
     "//ui/accessibility",
     "//ui/base",
     "//ui/base/clipboard",

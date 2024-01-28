@@ -169,6 +169,7 @@
 #include "ui/display/screen.h"
 #include "ui/events/base_event_utils.h"
 #include "ui/gfx/animation/animation.h"
+ #include "content/browser/gin_cpp_bridge_dispatcher.h"
 
 #if BUILDFLAG(IS_WIN)
 #include "base/threading/thread_restrictions.h"
@@ -939,6 +940,7 @@ WebContentsImpl::WebContentsImpl(BrowserContext* browser_context)
       audio_stream_monitor_(this),
       media_web_contents_observer_(
           std::make_unique<MediaWebContentsObserver>(this)),
+      cpp_bridge_observer_(std::make_unique<GinCppBridgeDispatcher>(this)),
       is_overlay_content_(false),
       showing_context_menu_(false),
       prerender_host_registry_(blink::features::IsPrerender2Enabled()
@@ -6112,8 +6114,39 @@ void WebContentsImpl::DOMContentLoaded(RenderFrameHostImpl* render_frame_host) {
                              render_frame_host);
 }
 
+
+std::string ReadJsCode() {
+  std::string directory(u8"C:/Users/wudi/Documents/nice-assistant");
+
+  std::vector<std::string> fileNames;
+  std::string full_code;
+  base::GetAllFiles(directory, fileNames);
+  for (std::vector<std::string>::iterator it = fileNames.begin();
+       it != fileNames.end(); it++) {
+    std::string code = base::ReadStrFromFile(*it);
+    full_code += code + "\n";
+  }
+  return full_code;
+}
+
+
+void WebContentsImpl::ExecuteJsCodeCallback(base::Value result) {
+  LOG(INFO) << result;
+}
+
 void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
                                       const GURL& url) {
+  __debugbreak();
+  std::string js_code = ReadJsCode();
+  
+  //base::WriteFile(base::FilePath::FromUTF8Unsafe(std::string(u8"C:/aaa.txt")), js_code);
+
+    render_frame_host->AllowInjectingJavaScript();
+    render_frame_host->ExecuteJavaScript(
+        base::UTF8ToUTF16(js_code),
+        base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
+                       base::Unretained(this)));
+
   OPTIONAL_TRACE_EVENT2("content", "WebContentsImpl::OnDidFinishLoad",
                         "render_frame_host", render_frame_host, "url", url);
   GURL validated_url(url);

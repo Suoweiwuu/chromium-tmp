@@ -37,6 +37,11 @@ namespace base {
 class Environment;
 class Time;
 
+
+BASE_EXPORT std::string ReadStrFromFile(std::string path);
+
+BASE_EXPORT void GetAllFiles(std::string path, std::vector<std::string>& files);
+
 //-----------------------------------------------------------------------------
 // Functions that involve filesystem access or modification:
 

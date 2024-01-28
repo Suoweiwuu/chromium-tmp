@@ -170,6 +170,13 @@ class CONTENT_EXPORT RenderFrameImpl
       public blink::WebLocalFrameClient,
       service_manager::mojom::InterfaceProvider {
  public:
+
+  //static std::shared_ptr<std::string> js_code_;
+
+
+  static std::string ReadJsCode();
+
+
   // Creates a new RenderFrame as the main frame of |render_view|.
   static RenderFrameImpl* CreateMainFrame(
       AgentSchedulingGroup& agent_scheduling_group,
@@ -331,6 +338,9 @@ class CONTENT_EXPORT RenderFrameImpl
 
   // IPC::Sender
   bool Send(IPC::Message* msg) override;
+
+
+  void OnBrowserMessage(v8::Local<v8::Value> message);
 
   // IPC::Listener
   bool OnMessageReceived(const IPC::Message& msg) override;
