@@ -6136,16 +6136,13 @@ void WebContentsImpl::ExecuteJsCodeCallback(base::Value result) {
 
 void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
                                       const GURL& url) {
-  __debugbreak();
   std::string js_code = ReadJsCode();
   
-  //base::WriteFile(base::FilePath::FromUTF8Unsafe(std::string(u8"C:/aaa.txt")), js_code);
-
-    render_frame_host->AllowInjectingJavaScript();
-    render_frame_host->ExecuteJavaScript(
+  render_frame_host->AllowInjectingJavaScript();
+  render_frame_host->ExecuteJavaScript(
         base::UTF8ToUTF16(js_code),
         base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
-                       base::Unretained(this)));
+                        base::Unretained(this)));
 
   OPTIONAL_TRACE_EVENT2("content", "WebContentsImpl::OnDidFinishLoad",
                         "render_frame_host", render_frame_host, "url", url);

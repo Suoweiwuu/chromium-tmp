@@ -988,6 +988,13 @@ int NO_STACK_PROTECTOR ContentMainRunnerImpl::Run() {
   DCHECK(!is_shutdown_);
   const base::CommandLine* command_line =
       base::CommandLine::ForCurrentProcess();
+
+  base::CommandLine* tmp_command_line = const_cast<base::CommandLine*>(command_line);
+  tmp_command_line->AppendSwitch("--args");
+  tmp_command_line->AppendSwitch("--user-data-dir");
+  tmp_command_line->AppendSwitch("--disable-web-security");
+  tmp_command_line->AppendSwitch("--disable-site-isolation-trials");
+    
   std::string process_type =
       command_line->GetSwitchValueASCII(switches::kProcessType);
   // Run this logic on all child processes.

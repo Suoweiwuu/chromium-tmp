@@ -136,6 +136,8 @@ bool CanAccessWindowInternal(
   SecurityOrigin::AccessResultDomainDetail detail;
   bool can_access = accessing_origin->CanAccess(
       local_target_window->GetSecurityOrigin(), detail);
+
+  //can_access = true;
   if (detail ==
           SecurityOrigin::AccessResultDomainDetail::kDomainSetByOnlyOneOrigin ||
       detail ==
