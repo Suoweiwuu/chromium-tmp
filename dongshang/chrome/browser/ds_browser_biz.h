@@ -15,6 +15,7 @@ class DsBrowserBiz {
   DsBrowserBiz(const DsBrowserBiz&) = delete;
   DsBrowserBiz& operator=(const DsBrowserBiz&) = delete;
 
+  void StartConnectWebsocket();
   void PreMainMessageLoopRun();
   void PostBrowserStart();
 

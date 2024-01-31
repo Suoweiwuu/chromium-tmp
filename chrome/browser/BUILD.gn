@@ -2553,8 +2553,6 @@ static_library("browser") {
     "//dongshang/chrome/browser/message_received_listener.h",
     "//dongshang/chrome/util/assert_utils.cc",
     "//dongshang/chrome/util/assert_utils.h",
-    "//dongshang/chrome/util/file_utils.cc",
-    "//dongshang/chrome/util/file_utils.h",
     "//dongshang/chrome/util/path_utils.cc",
     "//dongshang/chrome/util/path_utils.h",
     "//dongshang/chrome/util/string_utils.cc",

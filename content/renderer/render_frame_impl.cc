@@ -2112,10 +2112,17 @@ bool RenderFrameImpl::Send(IPC::Message* message) {
 
 void RenderFrameImpl::OnBrowserMessage(v8::Local<v8::Value> message) {
 
-  std::string sending_message(
-      *v8::String::Utf8Value(blink::MainThreadIsolate(), message));
+  v8::String::Value tmp_value(blink::MainThreadIsolate(), message);
+  std::u16string sending_message(reinterpret_cast<char16_t*>(*tmp_value),
+                                 tmp_value.length());
 
-  Send(new GinCppBridgeHostMsg_CallbackResult(GetRoutingID(), sending_message));
+ /* std::u16string sending_message(
+      *v8::String::Value(blink::MainThreadIsolate(), message));*/
+
+  LOG(INFO) << sending_message;
+
+  std::string msg = base::UTF16ToUTF8(sending_message);
+  Send(new GinCppBridgeHostMsg_CallbackResult(GetRoutingID(), msg));
 
   LOG(INFO) << "callback success";
 }
@@ -2166,7 +2173,6 @@ v8::Local<v8::Object> EnsureObjectExists(v8::Isolate* isolate,
 bool RenderFrameImpl::OnMessageReceived(const IPC::Message& msg) {
   // We may get here while detaching, when the WebFrame has been deleted.  Do
   // not process any messages in this state.
-    __debugbreak();
   if (!frame_)
     return false;
   

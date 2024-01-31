@@ -2,6 +2,8 @@
 
 #include "content/public/browser/dongshang/websocket_client.h"
 #include "content/public/browser/dongshang/websocket.h"
+#include "content/public/browser/browser_thread.h"
+#include "content/public/browser/browser_task_traits.h"
 
 #include <stddef.h>
 
@@ -16,6 +18,7 @@
 #include "base/memory/raw_ptr.h"
 #include "base/memory/ref_counted.h"
 
+#include "base/logging.h"
 #include "base/run_loop.h"
 #include "base/threading/thread.h"
 #include "base/time/time.h"
@@ -35,7 +38,7 @@ WebsocketClient::WebsocketClient(std::string url, WebSocketListener* listener) {
 WebsocketClient::~WebsocketClient() {}
 
 
-bool WebsocketClient::CreateWebSocket() {
+void WebsocketClient::CreateWebSocket() {
     int error;
     std::unique_ptr<WebSocket> sock(new WebSocket(GURL(url_), listener_));
     base::RunLoop run_loop;
@@ -44,21 +47,45 @@ bool WebsocketClient::CreateWebSocket() {
     run_loop.Run();
     if (error == net::OK) {
       socket_ = std::move(sock);
-      return true;  
+      LOG(INFO) << "connect success";
+    } else {
+      LOG(INFO) << "connect failure";
     }
-    return false;
 }
 
 MY_EXPORT inline bool WebsocketClient::Connect() {
-  return CreateWebSocket();
+#if BUILDFLAG(IS_WIN)
+    CreateWebSocket();
+#else
+    content::GetIOThreadTaskRunner({base::MayBlock()})
+        ->PostTask(FROM_HERE,
+                   base::BindOnce(&WebsocketClient::CreateWebSocket,
+                                  base::Unretained(this)));
+#endif
+    return true;
 }
 
 
-MY_EXPORT inline  bool WebsocketClient::Disconnect() {
+MY_EXPORT inline bool WebsocketClient::Disconnect() {
   LOG(INFO) << "Disconnect";
   return true;
 }
 
+void WebsocketClient::DoSend(std::string message) {
+  if (!socket_ || !socket_->Send(message)) {
+      // retry once
+      Connect();
+      socket_->Send(message);
+  }
+}
+
+
 void WebsocketClient::Send(std::string message) {
-  socket_->Send(message);
+#if BUILDFLAG(IS_WIN)
+  DoSend(message);
+#else
+  content::GetIOThreadTaskRunner({base::MayBlock()})
+      ->PostTask(FROM_HERE, base::BindOnce(&WebsocketClient::DoSend,
+                                           base::Unretained(this), message));
+#endif
 }
