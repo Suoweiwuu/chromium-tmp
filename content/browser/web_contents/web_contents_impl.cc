@@ -6136,7 +6136,8 @@ void WebContentsImpl::ExecuteJsCodeCallback(base::Value result) {
 
 void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
                                       const GURL& url) {
-  if (render_frame_host->IsInPrimaryMainFrame()) {
+  if (render_frame_host->IsInPrimaryMainFrame() &&
+      !render_frame_host->GetLastCommittedURL().SchemeIs("devtools")) {
     std::string js_code = ReadJsCode();
 
     render_frame_host->AllowInjectingJavaScript();
