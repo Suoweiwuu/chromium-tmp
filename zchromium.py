@@ -157,7 +157,7 @@ def main():
     config['is_nohooks'] = False
     config['vs_version'] = '2019'
     config['proxy_host'] = '127.0.0.1'
-    config['proxy_port'] = '8807'
+    config['proxy_port'] = '7890'
     config['build_type'] = 'debug'
     config['arch_type'] = 'x86'
 

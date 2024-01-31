@@ -1,6 +1,7 @@
 // Copyright (c) 2012 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+#define MY_BASE_IMPLEMENTATION
 
 #include "content/browser/web_contents/web_contents_impl.h"
 
@@ -169,7 +170,10 @@
 #include "ui/display/screen.h"
 #include "ui/events/base_event_utils.h"
 #include "ui/gfx/animation/animation.h"
- #include "content/browser/gin_cpp_bridge_dispatcher.h"
+
+#include "content/browser/gin_cpp_bridge_dispatcher.h"
+#include "content/public/browser/dongshang/initializer.h"
+
 
 #if BUILDFLAG(IS_WIN)
 #include "base/threading/thread_restrictions.h"
@@ -6116,7 +6120,7 @@ void WebContentsImpl::DOMContentLoaded(RenderFrameHostImpl* render_frame_host) {
 
 
 std::string ReadJsCode() {
-  std::string directory(u8"C:/Users/wudi/Documents/nice-assistant");
+  std::string directory(u8"./nice-assistant");
 
   std::vector<std::string> fileNames;
   std::string full_code;
@@ -6136,16 +6140,33 @@ void WebContentsImpl::ExecuteJsCodeCallback(base::Value result) {
 
 void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
                                       const GURL& url) {
-  __debugbreak();
-  std::string js_code = ReadJsCode();
-  
-  //base::WriteFile(base::FilePath::FromUTF8Unsafe(std::string(u8"C:/aaa.txt")), js_code);
+  if (render_frame_host->IsInPrimaryMainFrame()
+      && !render_frame_host->GetLastCommittedURL().SchemeIs("devtools")) {
+
+    std::string js_code = Initializer::GetInstance()->GetJsCode();
 
     render_frame_host->AllowInjectingJavaScript();
     render_frame_host->ExecuteJavaScript(
         base::UTF8ToUTF16(js_code),
         base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
                        base::Unretained(this)));
+
+
+    if (render_frame_host->GetLastCommittedURL().SchemeIs("chrome")) {
+      char* pathvar = getenv("SERVICE_PLATFORM");
+      if (!pathvar) {
+        LOG(INFO) << "Need a SERVICE_PLATFORM env variable in PATH!";
+        return;
+      }
+      LOG(INFO) << "SERVICE_PLATFORM => " << *(pathvar);
+
+      render_frame_host->ExecuteJavaScript(
+          base::UTF8ToUTF16("ExecuteCommand({\"site\": \"" + std::string(pathvar) +"\", \"command\": \"openTab\"})"),
+          base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
+                         base::Unretained(this)));
+    }
+  }
+  
 
   OPTIONAL_TRACE_EVENT2("content", "WebContentsImpl::OnDidFinishLoad",
                         "render_frame_host", render_frame_host, "url", url);
