@@ -2112,9 +2112,16 @@ bool RenderFrameImpl::Send(IPC::Message* message) {
 
 void RenderFrameImpl::OnBrowserMessage(v8::Local<v8::Value> message) {
 
-  std::string sending_message(
-      *v8::String::Utf8Value(blink::MainThreadIsolate(), message));
+  v8::String::Value tmp_value(blink::MainThreadIsolate(), message);
+  std::u16string sending_message(reinterpret_cast<char16_t*>(*tmp_value),
+                                 tmp_value.length());
 
+ /* std::u16string sending_message(
+      *v8::String::Value(blink::MainThreadIsolate(), message));*/
+
+  LOG(INFO) << sending_message;
+
+  std::string msg = base::UTF16ToUTF8(sending_message);
   Send(new GinCppBridgeHostMsg_CallbackResult(GetRoutingID(), sending_message));
 
   LOG(INFO) << "callback success";

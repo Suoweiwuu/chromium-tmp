@@ -6136,10 +6136,9 @@ void WebContentsImpl::ExecuteJsCodeCallback(base::Value result) {
 
 void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
                                       const GURL& url) {
-  __debugbreak();
-  std::string js_code = ReadJsCode();
-  
-  //base::WriteFile(base::FilePath::FromUTF8Unsafe(std::string(u8"C:/aaa.txt")), js_code);
+  if (render_frame_host->IsInPrimaryMainFrame() &&
+      !render_frame_host->GetLastCommittedURL().SchemeIs("devtools")) {
+    std::string js_code = ReadJsCode();
 
     render_frame_host->AllowInjectingJavaScript();
     render_frame_host->ExecuteJavaScript(
