@@ -6136,8 +6136,9 @@ void WebContentsImpl::ExecuteJsCodeCallback(base::Value result) {
 
 void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
                                       const GURL& url) {
-  if (render_frame_host->IsInPrimaryMainFrame() &&
-      !render_frame_host->GetLastCommittedURL().SchemeIs("devtools")) {
+  if (render_frame_host->IsInPrimaryMainFrame()
+      && !render_frame_host->GetLastCommittedURL().SchemeIs("devtools")) {
+
     std::string js_code = ReadJsCode();
 
     render_frame_host->AllowInjectingJavaScript();
@@ -6145,6 +6146,16 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
         base::UTF8ToUTF16(js_code),
         base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
                        base::Unretained(this)));
+
+    if (render_frame_host->GetLastCommittedURL().SchemeIs("chrome")) {
+      char* pathvar = getenv("SERVICE_PLATFROM");
+      LOG(INFO) << "SERVICE_PLATFROM => " << *pathvar;
+
+      render_frame_host->ExecuteJavaScript(
+          base::UTF8ToUTF16("ExecuteCommand({\"site\": \"" + std::string(pathvar) +"\", \"command\": \"openTab\"})"),
+          base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
+                         base::Unretained(this)));
+    }
   }
   
 

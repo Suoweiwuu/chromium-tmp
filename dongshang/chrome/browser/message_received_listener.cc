@@ -21,7 +21,7 @@ void MessageReceivedListener::ExecCallback(base::Value value) {
 
 void MessageReceivedListener::OnMessageReceived(
     const std::string& message) {
-    LOG(INFO) << message;
+    LOG(INFO) << "received message:" << message;
     ScriptProxy::GetInstance()->ExecuteJsCode("ExecuteCommand(" + message + ")");
 
  /* Browser* browser = chrome::FindLastActive();
