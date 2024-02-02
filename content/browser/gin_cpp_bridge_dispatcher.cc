@@ -17,7 +17,8 @@ GinCppBridgeDispatcher::GinCppBridgeDispatcher(
 GinCppBridgeDispatcher::~GinCppBridgeDispatcher() {}
 
 void GinCppBridgeDispatcher::OnUploadData(std::string message) {
-  LOG(INFO) << message;
+  LOG(INFO) << "Upload message => " << message.c_str();
+
   std::shared_ptr<WebsocketClient> websocket_client = WebsocketClientFactory::GetDefaultInstance();
   if (websocket_client)
     websocket_client->Send(message);

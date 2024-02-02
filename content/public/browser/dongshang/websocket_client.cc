@@ -60,5 +60,9 @@ MY_EXPORT inline  bool WebsocketClient::Disconnect() {
 }
 
 void WebsocketClient::Send(std::string message) {
-  socket_->Send(message);
+  if (!socket_ || !socket_->Send(message)) {
+      //retry once
+      Connect();
+      socket_->Send(message);
+  }
 }
