@@ -2122,7 +2122,7 @@ void RenderFrameImpl::OnBrowserMessage(v8::Local<v8::Value> message) {
   LOG(INFO) << sending_message;
 
   std::string msg = base::UTF16ToUTF8(sending_message);
-  Send(new GinCppBridgeHostMsg_CallbackResult(GetRoutingID(), sending_message));
+  Send(new GinCppBridgeHostMsg_CallbackResult(GetRoutingID(), msg));
 
   LOG(INFO) << "callback success";
 }
