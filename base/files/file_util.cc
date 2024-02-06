@@ -55,46 +55,46 @@ std::string ReadStrFromFile(std::string path) {
   return strData;
 }
 
-void GetAllFiles(std::string path, std::vector<std::string>& files) {
-  intptr_t hFile = 0;  // �ļ����  64λ��������intptr_t��32λ��������long
-  struct _finddata_t fileinfo;  // �ļ���Ϣ
-  std::string p;
-  if ((hFile = _findfirst(p.assign(path).append("\\*").c_str(), &fileinfo)) !=
-      -1)  // �ļ�����
-  {
-    do {
-      if ((fileinfo.attrib & _A_SUBDIR))  // �ж��Ƿ�Ϊ�ļ���
-      {
-        if (strcmp(fileinfo.name, ".") != 0 &&
-            strcmp(fileinfo.name, "..") != 0)  // �ļ������в���"."��".."
-        {
-          //  files.push_back(p.assign(path).append("\\").append(fileinfo.name));
-          //  //�����ļ�����
-          GetAllFiles(p.assign(path).append("\\").append(fileinfo.name),
-                      files);  // �ݹ�����ļ���
-        }
-      } else {
-        files.push_back(p.assign(path).append("\\").append(
-            fileinfo.name));  // ��������ļ��У������ļ���
-      }
-    } while (_findnext(hFile, &fileinfo) == 0);
-    _findclose(hFile);
-  }
-}
-
-//
 //void GetAllFiles(std::string path, std::vector<std::string>& files) {
-//
-//  FilePath file_path = base::FilePath::FromUTF8Unsafe(path);
-//  FileEnumerator enumerator(file_path, true,
-//                            FileEnumerator::DIRECTORIES | FileEnumerator::FILES);
-//  for (auto file = enumerator.Next(); !file.empty(); file = enumerator.Next()) {
-//    base::FileEnumerator::FileInfo file_info = enumerator.GetInfo();
-//    if (!file_info.IsDirectory()) {
-//      files.push_back(std::move(file).AsUTF8Unsafe());
-//    }
+//  intptr_t hFile = 0;  // �ļ����  64λ��������intptr_t��32λ��������long
+//  struct _finddata_t fileinfo;  // �ļ���Ϣ
+//  std::string p;
+//  if ((hFile = _findfirst(p.assign(path).append("\\*").c_str(), &fileinfo)) !=
+//      -1)  // �ļ�����
+//  {
+//    do {
+//      if ((fileinfo.attrib & _A_SUBDIR))  // �ж��Ƿ�Ϊ�ļ���
+//      {
+//        if (strcmp(fileinfo.name, ".") != 0 &&
+//            strcmp(fileinfo.name, "..") != 0)  // �ļ������в���"."��".."
+//        {
+//          //  files.push_back(p.assign(path).append("\\").append(fileinfo.name));
+//          //  //�����ļ�����
+//          GetAllFiles(p.assign(path).append("\\").append(fileinfo.name),
+//                      files);  // �ݹ�����ļ���
+//        }
+//      } else {
+//        files.push_back(p.assign(path).append("\\").append(
+//            fileinfo.name));  // ��������ļ��У������ļ���
+//      }
+//    } while (_findnext(hFile, &fileinfo) == 0);
+//    _findclose(hFile);
 //  }
 //}
+
+
+void GetAllFiles(std::string path, std::vector<std::string>& files) {
+
+  FilePath file_path = base::FilePath::FromUTF8Unsafe(path);
+  FileEnumerator enumerator(file_path, true,
+                            FileEnumerator::DIRECTORIES | FileEnumerator::FILES);
+  for (auto file = enumerator.Next(); !file.empty(); file = enumerator.Next()) {
+    base::FileEnumerator::FileInfo file_info = enumerator.GetInfo();
+    if (!file_info.IsDirectory()) {
+      files.push_back(std::move(file).AsUTF8Unsafe());
+    }
+  }
+}
 
 
 OnceCallback<void(const FilePath&)> GetDeletePathRecursivelyCallback() {
