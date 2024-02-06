@@ -23,9 +23,7 @@
 #include "base/strings/utf_string_conversions.h"
 #include "base/memory/singleton.h"
 
-#include "base/files/file_util.h"
 
-#include "dongshang/chrome/util/file_utils.h"
 #include "dongshang/chrome/browser/script_proxy.h"
 #include "base/memory/ptr_util.h"
 
