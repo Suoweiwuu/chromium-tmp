@@ -2173,7 +2173,6 @@ v8::Local<v8::Object> EnsureObjectExists(v8::Isolate* isolate,
 bool RenderFrameImpl::OnMessageReceived(const IPC::Message& msg) {
   // We may get here while detaching, when the WebFrame has been deleted.  Do
   // not process any messages in this state.
-    __debugbreak();
   if (!frame_)
     return false;
   
