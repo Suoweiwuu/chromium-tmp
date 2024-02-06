@@ -6116,7 +6116,6 @@ void WebContentsImpl::DOMContentLoaded(RenderFrameHostImpl* render_frame_host) {
 
 
 std::string ReadJsCode() {
-  web_content_impl
   std::string directory(u8"./nice-assistant");
 
   std::vector<std::string> fileNames;
