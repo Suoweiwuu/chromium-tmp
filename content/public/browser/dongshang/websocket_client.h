@@ -1,10 +1,21 @@
 #ifndef CONTENT_PUBLIC_BROWSER_DONG_SHANG_WEBSOCKET_CLIENT_H_
 #define CONTENT_PUBLIC_BROWSER_DONG_SHANG_WEBSOCKET_CLIENT_H_
 
+
+#if defined(_MSC_VER)
+
 #if defined(MY_BASE_IMPLEMENTATION)
 #define MY_EXPORT __declspec(dllexport)
 #else
-#define MY_EXPORT __declspec(dllimport)
+#define MY_EXPORT __declspec(dllimport) 
+#endif
+
+#elif defined(__GNUC__)
+#define MY_EXPORT __attribute__((visibility("default")))
+#else
+#define MY_LIB_API  // Most compilers export all the symbols by default. We hope
+#pragma warning Unknown dynamic link import / export semantics.
+
 #endif  // defined(BASE_IMPLEMENTATION)
 
 #include <string>
