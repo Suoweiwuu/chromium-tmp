@@ -10,11 +10,8 @@
 #define MY_EXPORT __declspec(dllimport) 
 #endif
 
-#elif defined(__GNUC__)
-#define MY_EXPORT __attribute__((visibility("default")))
 #else
-#define MY_LIB_API  // Most compilers export all the symbols by default. We hope
-#pragma warning Unknown dynamic link import / export semantics.
+#define MY_EXPORT __attribute__((visibility("default")))
 
 #endif  // defined(BASE_IMPLEMENTATION)
 
