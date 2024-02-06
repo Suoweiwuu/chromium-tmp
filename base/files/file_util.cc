@@ -15,6 +15,7 @@
 #include <limits>
 #include <memory>
 #include <vector>
+#include <numeric>
 
 #include "base/check_op.h"
 #include "base/files/file_enumerator.h"
