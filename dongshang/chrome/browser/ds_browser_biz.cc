@@ -19,7 +19,7 @@ void handle_message(const std::string& message) {
 void DsBrowserBiz::PostBrowserStart() {
   MessageReceivedListener* listener = new MessageReceivedListener();
   websocket_client_ = WebsocketClientFactory::CreateAndGetDefaultInstance(
-      "ws://127.0.0.1:8989", listener);
+      "ws://192.168.121.185:8989", listener);
   listener->SetClient(websocket_client_);
   websocket_client_->Connect();
 
