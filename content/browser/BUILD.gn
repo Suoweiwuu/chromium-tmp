@@ -124,6 +124,7 @@ source_set("browser") {
     "//content/common:buildflags",
     "//content/common:mojo_bindings",
     "//content/public/browser:proto",
+    "//content/public/browser:ext_browser",
     "//content/public/common:common_sources",
     "//content/public/common:content_descriptor_keys",
     "//content/public/common:trust_tokens_mojo_bindings",
@@ -2114,6 +2115,9 @@ source_set("browser") {
     "worker_host/worker_script_loader.h",
     "worker_host/worker_script_loader_factory.cc",
     "worker_host/worker_script_loader_factory.h",
+    "gin_cpp_bridge_dispatcher.cc",
+    "gin_cpp_bridge_dispatcher.h",
+
   ]
 
   if (is_mac) {

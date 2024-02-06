@@ -85,6 +85,7 @@ source_set("common") {
     "font_list_fontconfig.cc",
     "frame_owner_element_type_mojom_traits.cc",
     "gin_java_bridge_messages.h",
+    "gin_cpp_bridge_messages.h",
     "in_process_child_thread_params.cc",
     "in_process_child_thread_params.h",
     "input/actions_parser.cc",

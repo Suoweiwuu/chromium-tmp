@@ -5,7 +5,7 @@
 
 #include "base/memory/weak_ptr.h"
 
-#include "content/public/browser/dongshang/websocket_client.h"
+#include "dongshang/chrome/browser/websocket_client.h"
 
 class DsBrowserBiz {
  public:

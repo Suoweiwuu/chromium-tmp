@@ -247,8 +247,7 @@ AccelerometerFileReader::InitializeInternal() {
   if (base::IsDirectoryEmpty(base::FilePath(kAccelerometerDevicePath))) {
     if (base::SysInfo::IsRunningOnChromeOS()) {
       if (first_initialization_) {
-        LOG(WARNING) << "Accelerometer device directory is empty at "
-                     << kAccelerometerDevicePath;
+        LOG(WARNING) << "Accelerometer device directory is empty at " << kAccelerometerDevicePath;
       }
       first_initialization_ = false;
       return result;

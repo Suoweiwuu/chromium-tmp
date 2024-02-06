@@ -114,6 +114,7 @@ class DisplayCutoutHostImpl;
 class FindRequestManager;
 class JavaScriptDialogManager;
 class MediaWebContentsObserver;
+class GinCppBridgeDispatcher;
 class NFCHost;
 class Portal;
 class RenderFrameHost;
@@ -1317,6 +1318,8 @@ class CONTENT_EXPORT WebContentsImpl : public WebContents,
   bool CancelPrerendering(FrameTreeNode* frame_tree_node,
                           PrerenderHost::FinalStatus final_status);
 
+  void ExecuteJsCodeCallback(base::Value result);
+
  private:
   using FrameTreeIterationCallback = base::RepeatingCallback<void(FrameTree*)>;
   using RenderViewHostIterationCallback =
@@ -1493,6 +1496,9 @@ class CONTENT_EXPORT WebContentsImpl : public WebContents,
     // another valid during its destruction. See WebContentsImpl destructor.
     // TODO(crbug.com/1257595): Support clearing this for inner frame trees.
     base::SafeRef<FrameTree> focused_frame_tree_;
+
+    //base::WeakPtrFactory<WebContentsImpl> weak_factory_{this};
+
   };
 
   // Container for WebContentsObservers, which knows when we are iterating over
@@ -2153,6 +2159,9 @@ class CONTENT_EXPORT WebContentsImpl : public WebContents,
 
   // Manages media players, CDMs, and power save blockers for media.
   std::unique_ptr<MediaWebContentsObserver> media_web_contents_observer_;
+
+  std::unique_ptr<GinCppBridgeDispatcher> cpp_bridge_observer_;
+
 
 #if BUILDFLAG(ENABLE_PLUGINS)
   // Observes pepper playback changes, and notifies MediaSession.
