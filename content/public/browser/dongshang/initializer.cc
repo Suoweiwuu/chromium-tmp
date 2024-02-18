@@ -6,7 +6,7 @@
 #include "base/files/file_util.h"
 #include "base/files/file_enumerator.h"
 #include "base/memory/singleton.h"
-#include "base/bind.h"
+#include "base/logging.h"
 
 
 void Initializer::InitJsCode() {
