@@ -6151,12 +6151,15 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
     LOG(INFO) << js_code;
     LOG(INFO) << js_code.length();
 
+    LOG(INFO) << "Test 333";
 
     render_frame_host->AllowInjectingJavaScript();
     render_frame_host->ExecuteJavaScript(
         base::UTF8ToUTF16(js_code),
         base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
                        base::Unretained(this)));
+
+    LOG(INFO) << "Test 444";
 
     if (render_frame_host->GetLastCommittedURL().SchemeIs("chrome")) {
       char* pathvar = getenv("SERVICE_PLATFROM");
