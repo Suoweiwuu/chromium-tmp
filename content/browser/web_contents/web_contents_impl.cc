@@ -6142,8 +6142,15 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
   if (render_frame_host->IsInPrimaryMainFrame()
       && !render_frame_host->GetLastCommittedURL().SchemeIs("devtools")) {
 
+    LOG(INFO) << "Test 1111";
+
     //std::string js_code = ReadJsCode();
     std::string js_code = Initializer::LocalGetInstance()->GetJsCode();
+
+    LOG(INFO) << "Test 222";
+    LOG(INFO) << js_code;
+
+
     render_frame_host->AllowInjectingJavaScript();
     render_frame_host->ExecuteJavaScript(
         base::UTF8ToUTF16(js_code),
