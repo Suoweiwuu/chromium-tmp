@@ -20,6 +20,7 @@ void Initializer::InitJsCode() {
     full_code += code + "\n";
   }
   js_code_ = full_code;
+  LOG(INFO) << "InitJsCode:" << js_code_.length();
 }
 
 
