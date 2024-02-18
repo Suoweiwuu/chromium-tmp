@@ -28,8 +28,6 @@ class Initializer {
 
   MY_EXPORT static Initializer* GetInstance();
 
-  static Initializer* LocalGetInstance();
-
  private:
   std::string js_code_;
 };

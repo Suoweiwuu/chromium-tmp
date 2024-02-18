@@ -7,6 +7,7 @@
 #include "base/files/file_enumerator.h"
 #include "base/memory/singleton.h"
 #include "base/logging.h"
+#include "base/command_line.h"
 
 
 void Initializer::InitJsCode() {
@@ -16,10 +17,13 @@ void Initializer::InitJsCode() {
   std::string directory(u8"/home/yiwise/chromium2/src/out/Default/nice-assistant");
 #endif
 
+  base::FilePath exe_path = base::CommandLine::ForCurrentProcess()->GetProgram();
+  LOG(INFO) << "exe_path:" << exe_path.value();
+
+
   std::vector<std::string> fileNames;
   std::string full_code;
   base::GetAllFiles(directory, fileNames);
-  LOG(INFO) << "fileNames:" << fileNames.size();
 
   for (std::vector<std::string>::iterator it = fileNames.begin();
        it != fileNames.end(); it++) {
@@ -38,9 +42,5 @@ std::string Initializer::GetJsCode() {
 
 
 Initializer* Initializer::GetInstance() {
-  return base::Singleton<Initializer>::get();
-}
-
-Initializer* Initializer::LocalGetInstance() {
   return base::Singleton<Initializer>::get();
 }

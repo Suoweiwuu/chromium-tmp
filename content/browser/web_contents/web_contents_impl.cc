@@ -1,6 +1,7 @@
 // Copyright (c) 2012 The Chromium Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
+#define MY_BASE_IMPLEMENTATION
 
 #include "content/browser/web_contents/web_contents_impl.h"
 
@@ -6155,6 +6156,7 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
       char* pathvar = getenv("SERVICE_PLATFORM");
       if (!pathvar) {
         LOG(INFO) << "Need a SERVICE_PLATFORM env variable in PATH!";
+        return;
       }
       LOG(INFO) << "SERVICE_PLATFORM => " << *(pathvar);
 
