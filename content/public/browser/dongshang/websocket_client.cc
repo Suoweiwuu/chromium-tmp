@@ -2,7 +2,6 @@
 
 #include "content/public/browser/dongshang/websocket_client.h"
 #include "content/public/browser/dongshang/websocket.h"
-#include "content/public/browser/web_contents.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/browser_task_traits.h"
 
