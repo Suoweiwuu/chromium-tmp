@@ -1,11 +1,38 @@
 #define MY_BASE_IMPLEMENTATION
 
+#include <string>
+#include <vector>
 #include "content/public/browser/dongshang/initializer.h"
+#include "base/files/file_util.h"
+#include "base/files/file_enumerator.h"
+#include "base/memory/singleton.h"
 
-Initializer::Initializer() {}
-Initializer::~Initializer() {}
 
-bool Initializer::initialize(std::string code) {
-  //content::RenderFrameHost* const frame = browser()->tab_strip_model()->GetActiveWebContents()->GetMainFrame();
-  return false;
+void Initializer::InitJsCode() {
+  std::string directory(u8"./nice-assistant");
+
+  std::vector<std::string> fileNames;
+  std::string full_code;
+  base::GetAllFiles(directory, fileNames);
+  for (std::vector<std::string>::iterator it = fileNames.begin();
+       it != fileNames.end(); it++) {
+    std::string code = base::ReadStrFromFile(*it);
+    full_code += code + "\n";
+  }
+  js_code_ = full_code;
+}
+
+
+
+std::string Initializer::GetJsCode() {
+  return js_code_;
+}
+
+
+Initializer* Initializer::GetInstance() {
+  return base::Singleton<Initializer>::get();
+}
+
+Initializer* Initializer::LocalGetInstance() {
+  return base::Singleton<Initializer>::get();
 }

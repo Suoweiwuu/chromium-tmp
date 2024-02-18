@@ -11,6 +11,7 @@
 #include "content/public/browser/web_contents.h"
 #include "content/public/browser/browser_thread.h"
 #include "content/public/browser/browser_task_traits.h"
+#include "content/public/browser/dongshang/initializer.h"
 
 DsBrowserBiz::DsBrowserBiz() {}
 
@@ -37,9 +38,14 @@ void DsBrowserBiz::PostBrowserStart() {
   //StartConnectWebsocket();
   //base::ThreadPoolInstance::CreateAndStartWithDefaultParams("WebSocketConnector");
 
-  content::GetIOThreadTaskRunner({base::MayBlock()})
-      ->PostTask(FROM_HERE, base::BindOnce(&DsBrowserBiz::StartConnectWebsocket,
+    #if BUILDFLAG(IS_WIN)
+  StartConnectWebsocket();
+    #else
+  content::GetIOThreadTaskRunner({base::MayBlock()})->PostTask(FROM_HERE, base::BindOnce(&DsBrowserBiz::StartConnectWebsocket,
                                            base::Unretained(this)));
+    #endif
+  Initializer::GetInstance()->InitJsCode();
+
 
   //scoped_refptr<base::SingleThreadTaskRunner> task_runner_ =
   //    base::CreateSingleThreadTaskRunner(

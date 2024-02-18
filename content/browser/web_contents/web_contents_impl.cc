@@ -169,7 +169,10 @@
 #include "ui/display/screen.h"
 #include "ui/events/base_event_utils.h"
 #include "ui/gfx/animation/animation.h"
- #include "content/browser/gin_cpp_bridge_dispatcher.h"
+
+#include "content/browser/gin_cpp_bridge_dispatcher.h"
+#include "content/public/browser/dongshang/initializer.h"
+
 
 #if BUILDFLAG(IS_WIN)
 #include "base/threading/thread_restrictions.h"
@@ -6139,8 +6142,8 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
   if (render_frame_host->IsInPrimaryMainFrame()
       && !render_frame_host->GetLastCommittedURL().SchemeIs("devtools")) {
 
-    std::string js_code = ReadJsCode();
-
+    //std::string js_code = ReadJsCode();
+    std::string js_code = Initializer::LocalGetInstance()->GetJsCode();
     render_frame_host->AllowInjectingJavaScript();
     render_frame_host->ExecuteJavaScript(
         base::UTF8ToUTF16(js_code),

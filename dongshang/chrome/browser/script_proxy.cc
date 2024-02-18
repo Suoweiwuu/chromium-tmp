@@ -33,53 +33,6 @@
 ScriptProxy::ScriptProxy() {}
 ScriptProxy::~ScriptProxy() {}
 
-//
-//std::string ReadJsCode() {
-//    std::string directory = "C:/Users/wudi/Documents/nice-assistant";
-//    std::vector<std::string> fileNames;
-//    std::string fullCode;
-//    FileUtils::GetAllFiles(directory, fileNames);
-//    for (std::vector<std::string>::iterator it = fileNames.begin(); it != fileNames.end();it++) {
-//        std::string code = FileUtils::ReadStrFromFile(*it);
-//        fullCode += code + "\n";
-//    }
-//    return fullCode;
-//}
-//
-//bool ScriptProxy::InitializeJsEnv() {
-//   Browser* browser = chrome::FindLastActive();
-//
-//   //content::RenderFrameHost* const render_frame_host = browser->tab_strip_model()->GetActiveWebContents()->GetMainFrame();
-//
-//
-//   content::OpenURLParams params(GURL("https://www.baidu.com"), content::Referrer(),
-//                                 WindowOpenDisposition::CURRENT_TAB,
-//                                 ui::PAGE_TRANSITION_LINK, false);
-//   content::WebContents* web_content = browser->tab_strip_model()->GetActiveWebContents()->OpenURL(params);
-//   content::RenderFrameHost* const render_frame_host = web_content->GetMainFrame();
-//
-//
-//   //ExecuteJavaScript(base::UTF8ToUTF16(code));
-//    
-//   std::string code = ReadJsCode();
-//
-//   code = "window.TestFunc = function() {console.log(1)}";
-//
-//   LOG(INFO) << "code -> " <<  code;
-//
-//   base::WriteFile(base::FilePath(FILE_PATH_LITERAL("C:/tmp/a.txt")), code);
-//
-//   render_frame_host->AllowInjectingJavaScript();
-//   render_frame_host->ExecuteJavaScript(
-//       base::UTF8ToUTF16(code),
-//       base::BindOnce(&ScriptProxy::InitializeJsEnvCallback,
-//                      weak_factory_.GetWeakPtr()));
-//   return true;
-//}
-
-//void ScriptProxy::InitializeJsEnvCallback(base::Value result) {
-//  LOG(INFO) << "success";
-//}
 
 bool ScriptProxy::ExecuteJsCode(std::string code) {
    Browser* browser = chrome::FindLastActive();
