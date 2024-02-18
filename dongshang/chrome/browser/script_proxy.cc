@@ -1,6 +1,5 @@
 #include <fstream>
 #include <map>
-#include <string>
 #include <vector>
 
 #include "content/public/browser/render_frame_host.h"
