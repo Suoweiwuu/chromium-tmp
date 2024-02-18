@@ -6155,7 +6155,7 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
 
     render_frame_host->AllowInjectingJavaScript();
     render_frame_host->ExecuteJavaScript(
-        u16"return 13333",
+        std::u16string("return 1133"),
         base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
                        base::Unretained(this)));
 
