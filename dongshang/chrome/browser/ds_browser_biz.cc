@@ -37,7 +37,9 @@ void DsBrowserBiz::PostBrowserStart() {
   //StartConnectWebsocket();
   //base::ThreadPoolInstance::CreateAndStartWithDefaultParams("WebSocketConnector");
 
-  content::GetIOThreadTaskRunner({})->PostTask(FROM_HERE, {base::MayBlock()}, base::BindOnce(&DsBrowserBiz::StartConnectWebsocket, base::Unretained(this)));
+  content::GetIOThreadTaskRunner({base::MayBlock()})
+      ->PostTask(FROM_HERE, base::BindOnce(&DsBrowserBiz::StartConnectWebsocket,
+                                           base::Unretained(this)));
 
   //scoped_refptr<base::SingleThreadTaskRunner> task_runner_ =
   //    base::CreateSingleThreadTaskRunner(
