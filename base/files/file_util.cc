@@ -17,6 +17,7 @@
 #include <vector>
 #include <numeric>
 
+#include "base/logging.h"
 #include "base/check_op.h"
 #include "base/files/file_enumerator.h"
 #include "base/files/file_path.h"
