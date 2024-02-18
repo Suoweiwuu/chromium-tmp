@@ -34,7 +34,7 @@ class WebsocketClient {
   void DoSend(std::string message);
 
  private:
-  bool CreateWebSocket();
+  void CreateWebSocket();
 
   std::unique_ptr<WebSocket> socket_;
   std::string url_;
