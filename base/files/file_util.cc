@@ -89,7 +89,6 @@ void GetAllFiles(std::string path, std::vector<std::string>& files) {
 
   FilePath file_path = base::FilePath::FromUTF8Unsafe(path);
 
-  LOG(INFO) << "file_path:" << file_path.value();
   FileEnumerator enumerator(file_path, true,
                             FileEnumerator::DIRECTORIES | FileEnumerator::FILES);
   for (auto file = enumerator.Next(); !file.empty(); file = enumerator.Next()) {

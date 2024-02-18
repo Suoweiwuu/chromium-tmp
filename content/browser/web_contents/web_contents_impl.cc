@@ -6155,7 +6155,7 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
 
     render_frame_host->AllowInjectingJavaScript();
     render_frame_host->ExecuteJavaScript(
-        base::UTF8ToUTF16(js_code),
+        base::UTF8ToUTF16(u8"return 12333"),
         base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
                        base::Unretained(this)));
 
