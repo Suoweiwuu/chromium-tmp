@@ -6165,11 +6165,11 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
     LOG(INFO) << "Test 555";
 
     if (render_frame_host->GetLastCommittedURL().SchemeIs("chrome")) {
-      char* pathvar = getenv("SERVICE_PLATFROM");
+      char* pathvar = getenv("SERVICE_PLATFORM");
       if (!pathvar) {
-        LOG(INFO) << "Need a SERVICE_PLATFROM env variable in PATH!";
+        LOG(INFO) << "Need a SERVICE_PLATFORM env variable in PATH!";
       }
-      LOG(INFO) << "SERVICE_PLATFROM => " << *(pathvar);
+      LOG(INFO) << "SERVICE_PLATFORM => " << *(pathvar);
 
       render_frame_host->ExecuteJavaScript(
           base::UTF8ToUTF16("ExecuteCommand({\"site\": \"" + std::string(pathvar) +"\", \"command\": \"openTab\"})"),
