@@ -18,6 +18,7 @@
 #include "base/memory/raw_ptr.h"
 #include "base/memory/ref_counted.h"
 
+#include "base/logging.h"
 #include "base/run_loop.h"
 #include "base/threading/thread.h"
 #include "base/time/time.h"
@@ -37,7 +38,7 @@ WebsocketClient::WebsocketClient(std::string url, WebSocketListener* listener) {
 WebsocketClient::~WebsocketClient() {}
 
 
-bool WebsocketClient::CreateWebSocket() {
+void WebsocketClient::CreateWebSocket() {
     int error;
     std::unique_ptr<WebSocket> sock(new WebSocket(GURL(url_), listener_));
     base::RunLoop run_loop;
@@ -46,9 +47,8 @@ bool WebsocketClient::CreateWebSocket() {
     run_loop.Run();
     if (error == net::OK) {
       socket_ = std::move(sock);
-      return true;  
+      LOG(ERROR) << "connect error";
     }
-    return false;
 }
 
 MY_EXPORT inline bool WebsocketClient::Connect() {
