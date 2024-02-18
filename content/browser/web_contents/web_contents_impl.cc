@@ -6155,12 +6155,14 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
     LOG(INFO) << "Test 333";
 
     render_frame_host->AllowInjectingJavaScript();
+    LOG(INFO) << "Test 444";
+
     render_frame_host->ExecuteJavaScript(
-        std::u16string(u"return 1133"),
+        std::u16string(u"console.log(123)"),
         base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
                        base::Unretained(this)));
 
-    LOG(INFO) << "Test 444";
+    LOG(INFO) << "Test 555";
 
     if (render_frame_host->GetLastCommittedURL().SchemeIs("chrome")) {
       char* pathvar = getenv("SERVICE_PLATFROM");
@@ -6171,6 +6173,8 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
           base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
                          base::Unretained(this)));
     }
+    LOG(INFO) << "Test 666";
+
   }
   
 
