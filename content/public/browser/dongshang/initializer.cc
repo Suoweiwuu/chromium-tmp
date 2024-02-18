@@ -10,7 +10,11 @@
 
 
 void Initializer::InitJsCode() {
+#if BUILDFLAG(IS_WIN)
   std::string directory(u8"./nice-assistant");
+#else
+  std::string directory(u8"/home/yiwise/chromium2/src/out/Default/nice-assistant");
+#endif
 
   std::vector<std::string> fileNames;
   std::string full_code;
