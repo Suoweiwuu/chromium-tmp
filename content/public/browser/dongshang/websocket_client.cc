@@ -47,7 +47,9 @@ void WebsocketClient::CreateWebSocket() {
     run_loop.Run();
     if (error == net::OK) {
       socket_ = std::move(sock);
-      LOG(ERROR) << "connect error";
+      LOG(INFO) << "connect success";
+    } else {
+      LOG(INFO) << "connect failure";
     }
 }
 
