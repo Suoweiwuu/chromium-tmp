@@ -6135,7 +6135,6 @@ std::string ReadJsCode() {
 
 void WebContentsImpl::ExecuteJsCodeCallback(base::Value result) {
   LOG(INFO) << result;
-  LOG(INFO) << "result================================================================================";
 }
 
 void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
@@ -6143,20 +6142,9 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
   if (render_frame_host->IsInPrimaryMainFrame()
       && !render_frame_host->GetLastCommittedURL().SchemeIs("devtools")) {
 
-    LOG(INFO) << "Test 1111";
-
-    //std::string js_code = ReadJsCode();
     std::string js_code = Initializer::GetInstance()->GetJsCode();
 
-    LOG(INFO) << "Test 222";
-    LOG(INFO) << js_code;
-    LOG(INFO) << js_code.length();
-
-    LOG(INFO) << "Test 333";
-
     render_frame_host->AllowInjectingJavaScript();
-    LOG(INFO) << "Test 444";
-
     render_frame_host->ExecuteJavaScript(
         base::UTF8ToUTF16(js_code),
         base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
@@ -6175,8 +6163,6 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
           base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
                          base::Unretained(this)));
     }
-    LOG(INFO) << "Test 666";
-
   }
   
 

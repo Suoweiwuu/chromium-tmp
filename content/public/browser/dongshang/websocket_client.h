@@ -31,6 +31,7 @@ class WebsocketClient {
   MY_EXPORT bool Connect();
   MY_EXPORT bool Disconnect();
   void Send(std::string message);
+  void DoSend(std::string message);
 
  private:
   bool CreateWebSocket();

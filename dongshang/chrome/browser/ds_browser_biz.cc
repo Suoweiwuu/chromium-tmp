@@ -37,13 +37,8 @@ void DsBrowserBiz::PostBrowserStart() {
   //__debugbreak();
   //StartConnectWebsocket();
   //base::ThreadPoolInstance::CreateAndStartWithDefaultParams("WebSocketConnector");
-
-    #if BUILDFLAG(IS_WIN)
   StartConnectWebsocket();
-    #else
-  content::GetIOThreadTaskRunner({base::MayBlock()})->PostTask(FROM_HERE, base::BindOnce(&DsBrowserBiz::StartConnectWebsocket,
-                                           base::Unretained(this)));
-    #endif
+
   Initializer::GetInstance()->InitJsCode();
 
 

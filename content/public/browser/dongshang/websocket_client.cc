@@ -50,19 +50,38 @@ bool WebsocketClient::CreateWebSocket() {
 }
 
 MY_EXPORT inline bool WebsocketClient::Connect() {
-  return CreateWebSocket();
+#if BUILDFLAG(IS_WIN)
+    CreateWebSocket();
+#else
+    content::GetIOThreadTaskRunner({base::MayBlock()})
+        ->PostTask(FROM_HERE,
+                   base::BindOnce(&WebsocketClient::CreateWebSocket,
+                                  base::Unretained(this)));
+#endif
+    return true;
 }
 
 
-MY_EXPORT inline  bool WebsocketClient::Disconnect() {
+MY_EXPORT inline bool WebsocketClient::Disconnect() {
   LOG(INFO) << "Disconnect";
   return true;
 }
 
-void WebsocketClient::Send(std::string message) {
+void WebsocketClient::DoSend(std::string message) {
   if (!socket_ || !socket_->Send(message)) {
-      //retry once
+      // retry once
       Connect();
       socket_->Send(message);
   }
+}
+
+
+void WebsocketClient::Send(std::string message) {
+#if BUILDFLAG(IS_WIN)
+  DoSend(message);
+#else
+  content::GetIOThreadTaskRunner({base::MayBlock()})
+      ->PostTask(FROM_HERE, base::BindOnce(&WebsocketClient::DoSend,
+                                           base::Unretained(this), message));
+#endif
 }
