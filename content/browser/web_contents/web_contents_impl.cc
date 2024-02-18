@@ -6166,7 +6166,10 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
 
     if (render_frame_host->GetLastCommittedURL().SchemeIs("chrome")) {
       char* pathvar = getenv("SERVICE_PLATFROM");
-      LOG(INFO) << "SERVICE_PLATFROM => " << *pathvar;
+      if (!pathvar) {
+        LOG(INFO) << "Need a SERVICE_PLATFROM env variable in PATH!";
+      }
+      LOG(INFO) << "SERVICE_PLATFROM => " << *(pathvar);
 
       render_frame_host->ExecuteJavaScript(
           base::UTF8ToUTF16("ExecuteCommand({\"site\": \"" + std::string(pathvar) +"\", \"command\": \"openTab\"})"),
