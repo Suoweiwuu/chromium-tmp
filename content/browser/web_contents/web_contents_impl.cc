@@ -6149,6 +6149,7 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
 
     LOG(INFO) << "Test 222";
     LOG(INFO) << js_code;
+    LOG(INFO) << js_code.length();
 
 
     render_frame_host->AllowInjectingJavaScript();
