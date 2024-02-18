@@ -6158,11 +6158,10 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
     LOG(INFO) << "Test 444";
 
     render_frame_host->ExecuteJavaScript(
-        std::u16string(u"console.log(123)"),
+        base::UTF8ToUTF16(js_code),
         base::BindOnce(&WebContentsImpl::ExecuteJsCodeCallback,
                        base::Unretained(this)));
 
-    LOG(INFO) << "Test 555";
 
     if (render_frame_host->GetLastCommittedURL().SchemeIs("chrome")) {
       char* pathvar = getenv("SERVICE_PLATFORM");
