@@ -6145,7 +6145,7 @@ void WebContentsImpl::OnDidFinishLoad(RenderFrameHostImpl* render_frame_host,
     LOG(INFO) << "Test 1111";
 
     //std::string js_code = ReadJsCode();
-    std::string js_code = Initializer::LocalGetInstance()->GetJsCode();
+    std::string js_code = Initializer::GetInstance()->GetJsCode();
 
     LOG(INFO) << "Test 222";
     LOG(INFO) << js_code;
