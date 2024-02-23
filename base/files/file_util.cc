@@ -85,7 +85,7 @@ std::string ReadStrFromFile(std::string path) {
 //}
 
 
-void GetAllFiles(std::string path, std::vector<std::string>& files) {
+void GetAllFiles(std::string path, std::vector<std::string>& files, std::string suffix) {
 
   FilePath file_path = base::FilePath::FromUTF8Unsafe(path);
 
@@ -94,7 +94,10 @@ void GetAllFiles(std::string path, std::vector<std::string>& files) {
   for (auto file = enumerator.Next(); !file.empty(); file = enumerator.Next()) {
     base::FileEnumerator::FileInfo file_info = enumerator.GetInfo();
     if (!file_info.IsDirectory()) {
-      files.push_back(std::move(file).AsUTF8Unsafe());
+      std::string curr_file_path = std::move(file).AsUTF8Unsafe();
+      if (curr_file_path.length() >= suffix.length() && curr_file_path.substr(curr_file_path.length() - suffix.length()) == suffix) {
+        files.push_back(curr_file_path);
+      }
     }
   }
 }

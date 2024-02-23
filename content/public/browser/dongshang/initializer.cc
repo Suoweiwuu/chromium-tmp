@@ -21,10 +21,11 @@ void Initializer::InitJsCode() {
   base::FilePath jsCodePath = exe_path.DirName().Append(FILE_PATH_LITERAL("nice-assistant"));
   LOG(INFO) << "exe_path:" << jsCodePath.AsUTF8Unsafe();
 
+  __debugbreak();
   std::string directory = jsCodePath.AsUTF8Unsafe();
   std::vector<std::string> fileNames;
   std::string full_code;
-  base::GetAllFiles(directory, fileNames);
+  base::GetAllFiles(directory, fileNames, u8".js");
 
   for (std::vector<std::string>::iterator it = fileNames.begin();
        it != fileNames.end(); it++) {

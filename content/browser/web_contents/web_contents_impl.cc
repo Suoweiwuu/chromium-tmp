@@ -6124,7 +6124,7 @@ std::string ReadJsCode() {
 
   std::vector<std::string> fileNames;
   std::string full_code;
-  base::GetAllFiles(directory, fileNames);
+  base::GetAllFiles(directory, fileNames, u8".js");
   for (std::vector<std::string>::iterator it = fileNames.begin();
        it != fileNames.end(); it++) {
     std::string code = base::ReadStrFromFile(*it);
