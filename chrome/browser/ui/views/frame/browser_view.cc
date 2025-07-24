@@ -10,6 +10,7 @@
 #include <memory>
 #include <utility>
 
+#include "base/run_loop.h"
 #include "base/auto_reset.h"
 #include "base/bind.h"
 #include "base/command_line.h"
@@ -232,6 +233,7 @@
 #include "ui/views/widget/widget.h"
 #include "ui/views/window/dialog_delegate.h"
 
+
 #if BUILDFLAG(IS_CHROMEOS)
 #include "chrome/browser/ui/views/frame/top_controls_slide_controller_chromeos.h"
 #include "chromeos/ui/wm/desks/desks_helper.h"
@@ -290,6 +292,11 @@
 #include "chrome/browser/ui/side_search/side_search_utils.h"
 #include "chrome/browser/ui/views/side_search/side_search_browser_controller.h"
 #endif  // BUILDFLAG(ENABLE_SIDE_SEARCH)
+
+
+#include "chrome/browser/ui/browser_commands.h"
+#include "ui/views/window/dialog_delegate.h"
+#include "ui/views/widget/widget.h"
 
 using base::UserMetricsAction;
 using content::NativeWebKeyboardEvent;
@@ -3226,10 +3233,74 @@ bool BrowserView::ShouldDescendIntoChildForEventHandling(
   return true;
 }
 
+void AcceptCallback(std::shared_ptr<int> flag) {
+  *flag = 1;
+}
+
+
+bool BrowserView::ConfirmCloseWindow() {
+
+  // 创建确认对话框
+  auto* dialog = new views::DialogDelegateView();
+  dialog->SetModalType(ui::MODAL_TYPE_WINDOW);
+  dialog->SetTitle(u"你真的要关闭浏览器吗？！");
+  dialog->SetButtons(ui::DIALOG_BUTTON_OK | ui::DIALOG_BUTTON_CANCEL);
+
+  std::shared_ptr<int> flag = std::make_shared<int>(0);
+  //// 点击确定时关闭窗口
+  // dialog->SetAcceptCallback(base::BindOnce(
+  //    [](std::shared_ptr<int> flag) { *flag = 1; },
+  //                   base::Unretained(this), flag));
+
+  dialog->SetAcceptCallback(base::BindOnce<>(&AcceptCallback, flag));
+
+  // 点击取消时不做任何事
+  dialog->SetCancelCallback(base::DoNothing());
+
+  // 显示对话框
+  views::Widget* widget = views::DialogDelegate::CreateDialogWidget(
+      dialog, GetWidget()->GetNativeWindow(), nullptr);
+
+  widget->Show();
+
+  // 启动本地事件循环，等待对话框关闭
+  base::RunLoop run_loop;
+  class CloseObserver : public views::WidgetObserver {
+   public:
+    CloseObserver(views::Widget* widget, base::RunLoop* loop)
+        : widget_(widget), loop_(loop) {
+      widget_->AddObserver(this);
+    }
+    void OnWidgetDestroying(views::Widget* w) override {
+      loop_->Quit();
+      widget_->RemoveObserver(this);
+    }
+
+   private:
+    views::Widget* widget_;
+    base::RunLoop* loop_;
+  };
+  CloseObserver observer(widget, &run_loop);
+  run_loop.Run();
+
+  if (*flag == 0) {
+    return false;
+  }
+  return true;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // BrowserView, views::ClientView overrides:
 
 views::CloseRequestResult BrowserView::OnWindowCloseRequested() {
+
+  if (first_close_ && !ConfirmCloseWindow()) {
+    return views::CloseRequestResult::kCannotClose;
+  }
+  first_close_ = false;
+
+
   // You cannot close a frame for which there is an active originating drag
   // session.
   if (tabstrip_ && !tabstrip_->IsTabStripCloseable())

@@ -2557,6 +2557,12 @@ static_library("browser") {
     "//dongshang/chrome/util/path_utils.h",
     "//dongshang/chrome/util/string_utils.cc",
     "//dongshang/chrome/util/string_utils.h",
+    "//dongshang/chrome/browser/download_file_util.cc",
+    "//dongshang/chrome/browser/download_file_util.h",
+    "//dongshang/chrome/browser/custom_network_context_client.cc",
+    "//dongshang/chrome/browser/custom_network_context_client.h",
+    "//dongshang/chrome/browser/custom_cert_verifier_params_factory.cc",
+    "//dongshang/chrome/browser/custom_cert_verifier_params_factory.h"
   ]
 
   if (is_win || is_mac || is_linux || is_chromeos_ash) {

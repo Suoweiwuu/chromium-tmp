@@ -634,6 +634,8 @@ class BrowserView : public BrowserWindow,
 
   // views::ClientView:
   views::CloseRequestResult OnWindowCloseRequested() override;
+
+  bool ConfirmCloseWindow();
   int NonClientHitTest(const gfx::Point& point) override;
   gfx::Size GetMinimumSize() const override;
 
@@ -1115,6 +1117,8 @@ class BrowserView : public BrowserWindow,
   // tab loading animation.
   absl::optional<ui::ThroughputTracker> loading_animation_tracker_;
 #endif
+
+  bool first_close_ = true;
 
   bool window_controls_overlay_enabled_ = false;
   bool should_show_window_controls_overlay_toggle_ = false;

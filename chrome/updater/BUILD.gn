@@ -455,7 +455,7 @@ if (is_win || is_mac || is_linux) {
       "//chrome/updater/updater_scope.cc",
       "//chrome/updater/updater_scope.h",
       "//chrome/updater/util.cc",
-      "//chrome/updater/util.h",
+      "//chrome/updater/util.h"
     ]
 
     deps = [

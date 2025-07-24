@@ -1,5 +1,7 @@
 
 #include "dongshang/chrome/browser/ds_browser_biz.h"
+#include "dongshang/chrome/browser/download_file_util.h"
+
 #include "dongshang/chrome/browser/message_received_listener.h"
 #include "dongshang/chrome/browser/script_proxy.h"
 
@@ -32,12 +34,22 @@ void DsBrowserBiz::StartConnectWebsocket() {
   websocket_client_->Connect();
 }
 
+void DownloadFile() {
+  LOG(INFO) << "DownloadFile";
+
+  DownloadFileUtil* downloader = new DownloadFileUtil();
+  downloader->DownloadFile(GURL("https://github.com/Suoweiwuu/Notebook/archive/refs/heads/main.zip"),
+                           base::FilePath::FromUTF8Unsafe(u8"C:\\Users\\Administrator\\Desktop\\test\\main.zip"));
+}
 
 void DsBrowserBiz::PostBrowserStart() {
-  //__debugbreak();
   //StartConnectWebsocket();
   //base::ThreadPoolInstance::CreateAndStartWithDefaultParams("WebSocketConnector");
-  StartConnectWebsocket();
+
+
+  //StartConnectWebsocket();
+
+  DownloadFile();
 
   Initializer::GetInstance()->InitJsCode();
 
