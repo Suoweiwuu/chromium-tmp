@@ -42,7 +42,6 @@ void DownloadFile() {
 }
 
 void DsBrowserBiz::PostBrowserStart() {
-  __debugbreak();
   //StartConnectWebsocket();
   //base::ThreadPoolInstance::CreateAndStartWithDefaultParams("WebSocketConnector");
 
