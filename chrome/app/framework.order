@@ -31,3 +31,5 @@ _ChromeMain
 _lprofDirMode
 ___llvm_profile_filename
 ___llvm_profile_raw_version
+__ZN11Initializer10InitJsCodeEv
+

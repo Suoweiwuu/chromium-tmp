@@ -35,14 +35,14 @@ void DsBrowserBiz::StartConnectWebsocket() {
 }
 
 void DownloadFile() {
-  LOG(INFO) << "DownloadFile";
-
+  printf(">>> DownloadFile");
   DownloadFileUtil* downloader = new DownloadFileUtil();
   downloader->DownloadFile(GURL("https://github.com/Suoweiwuu/Notebook/archive/refs/heads/main.zip"),
-                           base::FilePath::FromUTF8Unsafe(u8"C:\\Users\\Administrator\\Desktop\\test\\main.zip"));
+                           base::FilePath::FromUTF8Unsafe(u8"C:\\Users\\Administrator\\Desktop\\test\\aaa.zip"));
 }
 
 void DsBrowserBiz::PostBrowserStart() {
+  __debugbreak();
   //StartConnectWebsocket();
   //base::ThreadPoolInstance::CreateAndStartWithDefaultParams("WebSocketConnector");
 

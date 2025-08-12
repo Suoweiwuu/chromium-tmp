@@ -2,8 +2,7 @@
 
 #include "content/public/browser/dongshang/websocket_client_factory.h"
 
-MY_EXPORT std::shared_ptr<WebsocketClient>
-    WebsocketClientFactory::default_instance_;
+MY_EXPORT std::shared_ptr<WebsocketClient> default_instance_;
 
 //WebsocketClientFactory::WebsocketClientFactory() {}
 //
@@ -16,7 +15,7 @@ WebsocketClientFactory::GetInstance(
   return std::make_shared<WebsocketClient>(url, listener);
 }
 
-MY_EXPORT inline std::shared_ptr<WebsocketClient>
+MY_EXPORT std::shared_ptr<WebsocketClient>
 WebsocketClientFactory::CreateAndGetDefaultInstance(
     std::string url,
     WebSocketListener* listener) {

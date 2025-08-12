@@ -26,7 +26,7 @@ class  WebsocketClientFactory {
   static std::shared_ptr<WebsocketClient> GetDefaultInstance();
 
  private:
-  MY_EXPORT static std::shared_ptr<WebsocketClient> default_instance_;
+  //MY_EXPORT static std::shared_ptr<WebsocketClient> default_instance_;
 };
 
 #endif  // CONTENT_PUBLIC_BROWSER_DONG_SHANG_WEBSOCKET_CLIENT_FACTORY_H__
