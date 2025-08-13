@@ -57,7 +57,7 @@
 DownloadFileUtil::DownloadFileUtil() {}
 DownloadFileUtil::~DownloadFileUtil() {}
 
-void DownloadFileUtil::DownloadFile(const GURL& url,
+void DownloadFileUtil::DoDownloadFile(const GURL& url,
                                   const base::FilePath& output_path) {
   network_service_ = network::NetworkService::CreateForTesting();
 
@@ -104,6 +104,22 @@ void DownloadFileUtil::DownloadFile(const GURL& url,
                      base::Unretained(this)),
       output_path);
 }
+
+
+void DownloadFileUtil::DownloadFile(const GURL& url,
+    const base::FilePath& output_path) {
+  {
+    base::Thread::Options options;
+    options.message_pump_type = base::MessagePumpType::IO;  // 关键：IO消息泵
+    io_thread_.StartWithOptions(std::move(options));
+  }
+
+  // 2. 把任务投递到 IO 线程执行
+  io_thread_.task_runner()->PostTask(
+      FROM_HERE, base::BindOnce(&DownloadFileUtil::DoDownloadFile,
+                                base::Unretained(this), url, output_path));
+}
+
 
 
 void DownloadFileUtil::ResponseStartedCallback(int response_code,

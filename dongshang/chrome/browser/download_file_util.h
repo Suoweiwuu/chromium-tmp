@@ -11,6 +11,7 @@
 #include "services/network/network_service.h"
 #include "services/network/public/cpp/simple_url_loader.h"
 #include "base/run_loop.h"
+#include "base/threading/thread.h"
 
 namespace base {
 class FilePath;
@@ -39,6 +40,7 @@ class DownloadFileUtil {
   mojo::Remote<network::mojom::NetworkContext> network_context_;
   mojo::Remote<network::mojom::URLLoaderFactory> url_loader_factory_;
   std::unique_ptr<network::SimpleURLLoader> simple_url_loader_;
+  base::Thread io_thread_{"NetworkThread"};
 
 };
 
